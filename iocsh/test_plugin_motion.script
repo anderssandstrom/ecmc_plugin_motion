@@ -4,13 +4,12 @@
 
 ## Initiation:
 epicsEnvSet("IOC" ,"$(IOC="IOC_TEST")")
-epicsEnvSet("ECMCCFG_INIT" ,"")  #Only run startup once (auto at PSI, need call at ESS), variable set to "#" in startup.cmd
 epicsEnvSet("SCRIPTEXEC" ,"$(SCRIPTEXEC="iocshLoad")")
 
-require ecmccfg     "9.0.1_RC1"
+require ecmccfg "9.0.1_RC1"
 
 # run module startup.cmd (only needed at ESS  PSI auto call at require)
-$(ECMCCFG_INIT)$(SCRIPTEXEC) ${ecmccfg_DIR}startup.cmd, "IOC=$(IOC),ECMC_VER=v9.0.1_RC1"
+$(ECMCCFG_INIT="")$(SCRIPTEXEC) ${ecmccfg_DIR}startup.cmd, "IOC=$(IOC),ECMC_VER=v9.0.1_RC1"
 
 
 ##############################################################################
@@ -39,17 +38,11 @@ $(SCRIPTEXEC) ($(ecmccfg_DIR)configureAxis.cmd, CONFIG=./cfg/el7031.ax)
 
 ########################################################################s######
 ## Load plugin: MOTION
-
-epicsEnvSet(ECMC_PLUGIN_CONFIG,"PLUGIN_ID=1,AX=1,BUFF_SIZE=25,DBG=0,ENA=1")
-
-require ecmc_plugin_motion master ${ECMC_PLUGIN_CONFIG}
-${SCRIPTEXEC} ${ecmc_plugin_motion_DIR}startup.cmd "${ECMC_PLUGIN_CONFIG}"
-
-#epicsEnvSet(ECMC_PLUGIN_FILNAME,"/home/pi/epics/base-7.0.5/require/3.4.0/siteMods/ecmc_plugin_motion/master/lib/${EPICS_HOST_ARCH=linux-x86_64}/libecmc_plugin_motion.so")
 #
-#${SCRIPTEXEC} ${ecmccfg_DIR}loadPlugin.cmd, "PLUGIN_ID=0,FILE=${ECMC_PLUGIN_FILNAME},CONFIG='${ECMC_PLUGIN_CONFIG}', REPORT=1"
-## Note: INDEX is the index of FFT object in FFT plugin and not PLUGIN_ID. In this case the same
-##dbLoadRecords(ecmcPluginFFT.template,"P=$(IOC):,INDEX=0, NELM=${FFT_NELM}, AMP_DESC='Sine amplitude',AMP_EGU='',RAW_DESC='Sine',AMP_EGU='', TITLE='FFT of sinus in 5Hz'")
+epicsEnvSet(ECMC_PLUGIN_CONFIG,"PLUGIN_ID=1,AX=1,BUFF_SIZE=25,DBG=0,ENA=1")
+require ecmc_plugin_motion master ${ECMC_PLUGIN_CONFIG}
+# below needed at ESS but not PSI:
+${SCRIPTEXEC} ${ecmc_plugin_motion_DIR}startup.cmd "${ECMC_PLUGIN_CONFIG}"
 
 ##############################################################################
 ############# Configure diagnostics:

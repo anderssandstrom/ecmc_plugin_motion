@@ -1001,7 +1001,7 @@ void ecmcMotionPlg::doWriteWorker() {
   }
 }
 
-// triggered by work thread
+// triggered by low prio work thread only
 void ecmcMotionPlg::writeBuffers() {
   
   //Write all buffers
@@ -1020,7 +1020,7 @@ void ecmcMotionPlg::writeBuffers() {
   xPosBuffer_->writeBuffer();
 }
 
-// triggered by work thread
+// triggered by ecmc RT thread
 void ecmcMotionPlg::switchBuffers() {
 
 // switch in new empty buffer while data is stored in the other.
