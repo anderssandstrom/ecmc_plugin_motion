@@ -1,0 +1,272 @@
+
+
+# Parameter 0 type=asynFloat64Array, name=plugin.motion_0.actpos_arr, value is undefined DONE
+# Parameter 1 type=asynFloat64Array, name=plugin.motion_0.setpos_arr, value is undefined DONE
+# Parameter 2 type=asynFloat64Array, name=plugin.motion_0.diffpos_arr, value is undefined DONE
+# Parameter 3 type=asynFloat64Array, name=plugin.motion_0.x_arr, value is undefined DONE
+# Parameter 4 type=asynInt32, name=plugin.motion_0.enable, value=1, status=0 DONE
+# Parameter 5 type=asynInt32, name=plugin.motion_0.cmd, value=0, status=0
+# Parameter 6 type=asynInt32, name=plugin.motion_0.status, value=0, status=0
+# Parameter 7 type=asynInt32, name=plugin.motion_0.trigg, value=0, status=0
+# Parameter 8 type=asynInt32, name=plugin.motion_0.buff_size, value=25, status=0
+# Parameter 9 type=asynFloat64, name=plugin.motion_0.samplerate, value=1000, status=0
+# Parameter 10 type=asynInt32, name=plugin.motion_0.elem_count, value=0, status=0
+# Parameter 11 type=asynInt32, name=plugin.motion_0.axis_id, value=1, status=0
+# Parameter 12 type=asynInt32, name=plugin.motion_0.mode, value=0, status=0
+
+# Act pos
+record(waveform,"$(P)Plg-Mtn${INDEX}-PosAct-Arr"){
+  info(asyn:FIFO, "1000")
+  field(DESC, "Pos Act")
+  field(PINI, "1")
+  field(DTYP, "asynFloat64ArrayIn")
+  field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.actpos_arr")
+  field(FTVL, "DOUBLE")
+  field(NELM, "$(NELM)")
+  field(SCAN, "I/O Intr")
+  field(TSE,  "0")
+  field(EGU,  "${RAW_EGU= }")
+}
+
+# Set pos
+record(waveform,"$(P)Plg-Mtn${INDEX}-PosSet-Arr"){
+  info(asyn:FIFO, "1000")
+  field(DESC, "Pos Set")
+  field(PINI, "1")
+  field(DTYP, "asynFloat64ArrayIn")
+  field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.setpos_arr")
+  field(FTVL, "DOUBLE")
+  field(NELM, "$(NELM)")
+  field(SCAN, "I/O Intr")
+  field(TSE,  "0")
+  field(EGU,  "${RAW_EGU= }")
+}
+
+# Position Error
+record(waveform,"$(P)Plg-Mtn${INDEX}-PosErr-Arr"){
+  info(asyn:FIFO, "1000")
+  field(DESC, "Pos Error (diff)")
+  field(PINI, "1")
+  field(DTYP, "asynFloat64ArrayIn")
+  field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.diffpos_arr")
+  field(FTVL, "DOUBLE")
+  field(NELM, "$(NELM)")
+  field(SCAN, "I/O Intr")
+  field(TSE,  "0")
+  field(EGU,  "${RAW_EGU= }")
+}
+
+# X axis time (reltive within buffer)
+record(waveform,"$(P)Plg-Mtn${INDEX}-Time-Arr"){
+  info(asyn:FIFO, "1000")
+  field(DESC, "Rel. time within buffer")
+  field(PINI, "1")
+  field(DTYP, "asynFloat64ArrayIn")
+  field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.x_arr")
+  field(FTVL, "DOUBLE")
+  field(NELM, "$(NELM)")
+  field(SCAN, "I/O Intr")
+  field(TSE,  "0")
+  field(EGU,  "s")
+}
+
+# Axis Enable
+record(waveform,"$(P)Plg-Mtn${INDEX}-Ena-Arr"){
+  info(asyn:FIFO, "1000")
+  field(DESC, "Enable")
+  field(PINI, "1")
+  field(DTYP, "asynInt8ArrayIn")
+  field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.enable_arr")
+  field(FTVL, "CHAR")
+  field(NELM, "$(NELM)")
+  field(SCAN, "I/O Intr")
+  field(TSE,  "0")
+  field(EGU,  "s")
+}
+
+# Axis Enabled
+record(waveform,"$(P)Plg-Mtn${INDEX}-EnaAct-Arr"){
+  info(asyn:FIFO, "1000")
+  field(DESC, "Enabled")
+  field(PINI, "1")
+  field(DTYP, "asynInt8ArrayIn")
+  field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.enabled_arr")
+  field(FTVL, "CHAR")
+  field(NELM, "$(NELM)")
+  field(SCAN, "I/O Intr")
+  field(TSE,  "0")
+  field(EGU,  "s")
+}
+
+# Axis Busy
+record(waveform,"$(P)Plg-Mtn${INDEX}-Bsy-Arr"){
+  info(asyn:FIFO, "1000")
+  field(DESC, "Busy")
+  field(PINI, "1")
+  field(DTYP, "asynInt8ArrayIn")
+  field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.busy_arr")
+  field(FTVL, "CHAR")
+  field(NELM, "$(NELM)")
+  field(SCAN, "I/O Intr")
+  field(TSE,  "0")
+  field(EGU,  "s")
+}
+
+# Axis Execute
+record(waveform,"$(P)Plg-Mtn${INDEX}-Exe-Arr"){
+  info(asyn:FIFO, "1000")
+  field(DESC, "Execute")
+  field(PINI, "1")
+  field(DTYP, "asynInt8ArrayIn")
+  field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.execute_arr")
+  field(FTVL, "CHAR")
+  field(NELM, "$(NELM)")
+  field(SCAN, "I/O Intr")
+  field(TSE,  "0")
+  field(EGU,  "s")
+}
+
+# Axis Traj source
+record(waveform,"$(P)Plg-Mtn${INDEX}-TrjSrc-Arr"){
+  info(asyn:FIFO, "1000")
+  field(DESC, "Traj source")
+  field(PINI, "1")
+  field(DTYP, "asynInt8ArrayIn")
+  field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.trajsrc_arr")
+  field(FTVL, "CHAR")
+  field(NELM, "$(NELM)")
+  field(SCAN, "I/O Intr")
+  field(TSE,  "0")
+  field(EGU,  "s")
+}
+
+# Axis Enc source
+record(waveform,"$(P)Plg-Mtn${INDEX}-EncSrc-Arr"){
+  info(asyn:FIFO, "1000")
+  field(DESC, "Enc source")
+  field(PINI, "1")
+  field(DTYP, "asynInt8ArrayIn")
+  field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.encsrc_arr")
+  field(FTVL, "CHAR")
+  field(NELM, "$(NELM)")
+  field(SCAN, "I/O Intr")
+  field(TSE,  "0")
+  field(EGU,  "s")
+}
+
+# Axis At target
+record(waveform,"$(P)Plg-Mtn${INDEX}-AtTrg-Arr"){
+  info(asyn:FIFO, "1000")
+  field(DESC, "At target")
+  field(PINI, "1")
+  field(DTYP, "asynInt8ArrayIn")
+  field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.attarget_arr")
+  field(FTVL, "CHAR")
+  field(NELM, "$(NELM)")
+  field(SCAN, "I/O Intr")
+  field(TSE,  "0")
+  field(EGU,  "s")
+}
+
+# Axis Error Id
+record(waveform,"$(P)Plg-Mtn${INDEX}-ErrId-Arr"){
+  info(asyn:FIFO, "1000")
+  field(DESC, "Error Id")
+  field(PINI, "1")
+  field(DTYP, "asynInt8ArrayIn")
+  field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.error_arr")
+  field(FTVL, "CHAR")
+  field(NELM, "$(NELM)")
+  field(SCAN, "I/O Intr")
+  field(TSE,  "0")
+  field(EGU,  "s")
+}
+
+record(bo,"$(P)Plg-Mtn${INDEX}-EnaCmd-RB"){
+  info(asyn:READBACK,"1")
+  field(DESC, "Plg Enable")
+  field(DTYP,"asynInt32")
+  field(OUT, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.enable")
+  field(ZNAM,"FALSE")
+  field(ONAM,"TRUE")
+  field(DOL, "0")
+  field(VAL, "0")
+}
+
+record(ao,"$(P)Plg-Mtn${INDEX}-AxCmd-RB"){
+  info(asyn:READBACK,"1")
+  field(DESC, "Axis")
+  field(DTYP,"asynInt32")
+  field(OUT, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.axis_id")
+  field(DOL, "0")
+  field(VAL, "1")
+}
+
+record(ao,"$(P)Plg-Mtn${INDEX}-SmpHz-RB"){
+  info(asyn:READBACK,"1")
+  field(DESC, "Sample rate")
+  field(DTYP,"asynInt32")
+  field(OUT, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.samplerate")
+  field(DOL, "0")
+  field(VAL, "1")
+  field(EGU, "Hz")
+}
+
+record(ai,"$(P)Plg-Mtn${INDEX}-BuffSze"){
+  info(asyn:READBACK,"1")
+  field(DESC, "Buffer Size")
+  field(DTYP,"asynInt32")
+  field(OUT, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.buff_size")
+  field(DOL, "0")
+  field(VAL, "1")
+}
+
+record(ai,"$(P)Plg-Mtn${INDEX}-ElmCnt"){
+  info(asyn:READBACK,"1")
+  field(DESC, "Elements in buffer count")
+  field(DTYP,"asynInt32")
+  field(OUT, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.elem_count")
+  field(DOL, "0")
+  field(VAL, "1")
+}
+
+record(bo,"$(P)Plg-Mtn${INDEX}-TrgCmd-RB"){
+  info(asyn:READBACK,"1")
+  field(DESC, "Trigg command")
+  field(DTYP,"asynInt32")
+  field(OUT, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.trigg")
+  field(ZNAM,"IDLE")
+  field(ONAM,"TRIGG")  
+  field(VAL, "0")
+  field(HIGH, 0.001)
+}
+
+record(longout,"$(P)Plg-Mtn${INDEX}-Mde-RB"){
+  info(asyn:READBACK,"1")
+  field(DESC, "Mode selection")
+  field(PINI, "1")
+  field(TSE,  "0")
+  field(DTYP, "asynInt32")
+  field(OUT,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.mode")
+  field(SCAN, "Passive")
+}
+
+record(longout,"$(P)Plg-Mtn${INDEX}-Cmd-RB"){
+  info(asyn:READBACK,"1")
+  field(DESC, "Command")
+  field(PINI, "1")
+  field(TSE,  "0")
+  field(DTYP, "asynInt32")
+  field(OUT,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.cmd")
+  field(SCAN, "Passive")
+}
+
+record(longin,"$(P)Plg-Mtn${INDEX}-Stat"){
+  info(asyn:READBACK,"1")
+  field(DESC, "Status")
+  field(PINI, "1")
+  field(TSE,  "0")
+  field(DTYP, "asynInt32")
+  field(OUT,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.status")
+  field(SCAN, "Passive")
+}

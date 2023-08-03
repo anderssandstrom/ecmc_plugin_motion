@@ -1,0 +1,69 @@
+##############################################################################
+## Example: Configuraftion for running ecmc motion plugin
+##############################################################################
+
+## Initiation:
+epicsEnvSet("IOC" ,"$(IOC="IOC_TEST")")
+epicsEnvSet("ECMCCFG_INIT" ,"")  #Only run startup once (auto at PSI, need call at ESS), variable set to "#" in startup.cmd
+epicsEnvSet("SCRIPTEXEC" ,"$(SCRIPTEXEC="iocshLoad")")
+
+require ecmccfg     "9.0.1_RC1"
+
+# run module startup.cmd (only needed at ESS  PSI auto call at require)
+$(ECMCCFG_INIT)$(SCRIPTEXEC) ${ecmccfg_DIR}startup.cmd, "IOC=$(IOC),ECMC_VER=v9.0.1_RC1"
+
+
+##############################################################################
+## Configure hardware
+
+epicsEnvSet("ECMC_EC_SLAVE_NUM",              "1")
+${SCRIPTEXEC} ${ecmccfg_DIR}configureSlave.cmd, "SLAVE_ID=$(ECMC_EC_SLAVE_NUM), HW_DESC=EL7031, CONFIG=-Motor-Trinamic-QMot-QSH4218-41-10-035"
+epicsEnvSet("DRV_ID",              "${ECMC_EC_SLAVE_NUM}")
+${SCRIPTEXEC} ${ecmccfg_DIR}addSlave.cmd, "HW_DESC=EL2819"
+epicsEnvSet("DO_ID",              "${ECMC_EC_SLAVE_NUM}")
+
+# Configure drv input 1 as drv enable
+ecmcConfigOrDie "Cfg.EcAddSdo(${DRV_ID},0x8012,0x32,1,1)"
+OK
+# Control external drv enable
+ecmcConfigOrDie "Cfg.WriteEcEntryIDString(${DO_ID},binaryOutput02,1)"
+
+#Apply hardware configuration
+ecmcConfigOrDie "Cfg.EcApplyConfig(1)"
+
+##############################################################################
+## AXIS 1
+#
+epicsEnvSet("DEV",      "$(IOC)")
+$(SCRIPTEXEC) ($(ecmccfg_DIR)configureAxis.cmd, CONFIG=./cfg/el7031.ax)
+
+########################################################################s######
+## Load plugin: MOTION
+
+epicsEnvSet(ECMC_PLUGIN_CONFIG,"PLUGIN_ID=1,AX=1,BUFF_SIZE=25,DBG=0,ENA=1")
+
+require ecmc_plugin_motion master ${ECMC_PLUGIN_CONFIG}
+${SCRIPTEXEC} ${ecmc_plugin_motion_DIR}startup.cmd "${ECMC_PLUGIN_CONFIG}"
+
+#epicsEnvSet(ECMC_PLUGIN_FILNAME,"/home/pi/epics/base-7.0.5/require/3.4.0/siteMods/ecmc_plugin_motion/master/lib/${EPICS_HOST_ARCH=linux-x86_64}/libecmc_plugin_motion.so")
+#
+#${SCRIPTEXEC} ${ecmccfg_DIR}loadPlugin.cmd, "PLUGIN_ID=0,FILE=${ECMC_PLUGIN_FILNAME},CONFIG='${ECMC_PLUGIN_CONFIG}', REPORT=1"
+## Note: INDEX is the index of FFT object in FFT plugin and not PLUGIN_ID. In this case the same
+##dbLoadRecords(ecmcPluginFFT.template,"P=$(IOC):,INDEX=0, NELM=${FFT_NELM}, AMP_DESC='Sine amplitude',AMP_EGU='',RAW_DESC='Sine',AMP_EGU='', TITLE='FFT of sinus in 5Hz'")
+
+##############################################################################
+############# Configure diagnostics:
+
+ecmcConfigOrDie "Cfg.EcSetDiagnostics(1)"
+ecmcConfigOrDie "Cfg.EcEnablePrintouts(0)"
+ecmcConfigOrDie "Cfg.EcSetDomainFailedCyclesLimit(100)"
+ecmcConfigOrDie "Cfg.SetDiagAxisIndex(1)"
+ecmcConfigOrDie "Cfg.SetDiagAxisFreq(2)"
+ecmcConfigOrDie "Cfg.SetDiagAxisEnable(0)"
+
+##############################################################################
+############# go active:
+$(SCRIPTEXEC) ($(ecmccfg_DIR)setAppMode.cmd)
+
+iocInit
+dbl > pvs.log
