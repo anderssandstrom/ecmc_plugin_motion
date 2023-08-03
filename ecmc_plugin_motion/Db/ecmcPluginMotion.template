@@ -1,19 +1,3 @@
-
-
-# Parameter 0 type=asynFloat64Array, name=plugin.motion_0.actpos_arr, value is undefined DONE
-# Parameter 1 type=asynFloat64Array, name=plugin.motion_0.setpos_arr, value is undefined DONE
-# Parameter 2 type=asynFloat64Array, name=plugin.motion_0.diffpos_arr, value is undefined DONE
-# Parameter 3 type=asynFloat64Array, name=plugin.motion_0.x_arr, value is undefined DONE
-# Parameter 4 type=asynInt32, name=plugin.motion_0.enable, value=1, status=0 DONE
-# Parameter 5 type=asynInt32, name=plugin.motion_0.cmd, value=0, status=0
-# Parameter 6 type=asynInt32, name=plugin.motion_0.status, value=0, status=0
-# Parameter 7 type=asynInt32, name=plugin.motion_0.trigg, value=0, status=0
-# Parameter 8 type=asynInt32, name=plugin.motion_0.buff_size, value=25, status=0
-# Parameter 9 type=asynFloat64, name=plugin.motion_0.samplerate, value=1000, status=0
-# Parameter 10 type=asynInt32, name=plugin.motion_0.elem_count, value=0, status=0
-# Parameter 11 type=asynInt32, name=plugin.motion_0.axis_id, value=1, status=0
-# Parameter 12 type=asynInt32, name=plugin.motion_0.mode, value=0, status=0
-
 # Act pos
 record(waveform,"$(P)Plg-Mtn${INDEX}-PosAct-Arr"){
   info(asyn:FIFO, "1000")
@@ -216,8 +200,7 @@ record(ai,"$(P)Plg-Mtn${INDEX}-BuffSze"){
   info(asyn:READBACK,"1")
   field(DESC, "Buffer Size")
   field(DTYP,"asynInt32")
-  field(OUT, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.buff_size")
-  field(DOL, "0")
+  field(INP, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.buff_size")  
   field(VAL, "1")
 }
 
@@ -225,8 +208,7 @@ record(ai,"$(P)Plg-Mtn${INDEX}-ElmCnt"){
   info(asyn:READBACK,"1")
   field(DESC, "Elements in buffer count")
   field(DTYP,"asynInt32")
-  field(OUT, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.elem_count")
-  field(DOL, "0")
+  field(INP, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.elem_count")
   field(VAL, "1")
 }
 
@@ -267,6 +249,6 @@ record(longin,"$(P)Plg-Mtn${INDEX}-Stat"){
   field(PINI, "1")
   field(TSE,  "0")
   field(DTYP, "asynInt32")
-  field(OUT,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.status")
-  field(SCAN, "Passive")
+  field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.status")
+  field(SCAN, "I/O Intr")
 }
