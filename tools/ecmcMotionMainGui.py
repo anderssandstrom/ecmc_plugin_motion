@@ -61,13 +61,13 @@ class comSignal(QObject):
 class ecmcMtnMainGui(QtWidgets.QDialog):
     def __init__(self,prefix=None,mtnPluginId=None):        
         super(ecmcMtnMainGui, self).__init__()
-        #Mtn plugin
+
         self.pvnames={}
         self.pvs={}
         self.pv_signal_cbs={}
         self.data={}
-
-        #        
+        for data in self.data:
+            data = None;
 
         self.offline = False
         self.pvPrefixStr = prefix
@@ -81,17 +81,16 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.labelSpectY = "Amplitude"
         self.labelRawY = "Raw"
         self.title = ""
-        self.NMtn = 1024
+        #self.NMtn = 1024
         self.sampleRate = 1000
         self.sampleRateValid = False
         self.MtnYDataValid = False
         self.MtnXDataValid = False
-        self.RawYDataValid = False
-        self.RawXDataValid = False
+
         if prefix is None or mtnPluginId is None:
           self.offline = True
           self.pause = True
-          self.enable = False           
+          self.data['EnaCmd-RB'] = False           
         else:
           #Check for connection else go offline
           self.buildPvNames()          
@@ -102,48 +101,21 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
           else: 
             self.offline = True
             self.pause = True
-            self.enable = False          
+            self.data['EnaCmd-RB'] = False          
 
-        # Callbacks through signals
-        #self.comSignalX = comSignal()
-        #self.comSignalX.data_signal.connect(self.callbackFuncX) 
-#
-        #self.comSignalSpectY = comSignal()
-        #self.comSignalSpectY.data_signal.connect(self.callbackFuncSpectY)
-        #self.comSignalRawData = comSignal()
-        #self.comSignalRawData.data_signal.connect(self.callbackFuncrawData)
-        #self.comSignalEnable = comSignal()
-        #self.comSignalEnable.data_signal.connect(self.callbackFuncEnable)
-        #self.comSignalMode = comSignal()
-        #self.comSignalMode.data_signal.connect(self.callbackFuncMode)
-        #self.comSignalBuffIdAct = comSignal()
-        #self.comSignalBuffIdAct.data_signal.connect(self.callbackFuncBuffIdAct)
-        self.startupDone=False
-        
+        self.startupDone=False        
         self.pause = 0
-     
-        # Data
-        #self.dataX = None
-        #self.spectY = None
-        #self.rawdataY = None
-        #self.rawdataX = None
-        #self.enable = None
-
-
         self.createWidgets()
-        #self.connectPvs()
         self.setStatusOfWidgets()
         self.resize(1000,850)
-
         return
 
     def createWidgets(self):
-
         self.figure = plt.figure()
         self.plottedLineSpect = None
         self.plottedLineRaw = None
         self.axSpect = None
-        self.axRaw = None
+        self.axAnalog = None
         self.canvas = FigureCanvas(self.figure)   
         self.toolbar = NavigationToolbar(self.canvas, self) 
         self.pauseBtn = QPushButton(text = 'pause')
@@ -221,10 +193,10 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
              return
            if(enable>0):
              self.enableBtn.setStyleSheet("background-color: green")
-             self.enable = True
+             self.data['EnaCmd-RB'] = True
            else:
              self.enableBtn.setStyleSheet("background-color: red")
-             self.enable = False
+             self.data['EnaCmd-RB'] = False
    
            #self.sourceStr = self.pvSource.get(as_string=True)
            #if self.sourceStr is None:
@@ -237,21 +209,21 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
               return
            self.sampleRateValid = True
 
-           self.mode = self.pvs['Mde-RB'].get()    
-           if self.mode is None:
+           self.data['Mde-RB'] = self.pvs['Mde-RB'].get()    
+           if self.data['Mde-RB'] is None:
              print("pvs['Mde-RB'].get() failed")
              return
 
            self.modeStr = "NO_MODE"
            self.triggBtn.setEnabled(False) # Only enable if mode = TRIGG = 2
-           if self.mode == 1:
+           if self.data['Mde-RB'] == 1:
                self.modeStr = "CONT"
-               self.modeCombo.setCurrentIndex(self.mode-1) # Index starta t zero
+               self.modeCombo.setCurrentIndex(self.data['Mde-RB']-1) # Index starta t zero
    
-           if self.mode == 2:
+           if self.data['Mde-RB'] == 2:
                self.modeStr = "TRIGG"
                self.triggBtn.setEnabled(True)
-               self.modeCombo.setCurrentIndex(self.mode-1) # Index starta t zero
+               self.modeCombo.setCurrentIndex(self.data['Mde-RB']-1) # Index starta t zero
    
            self.setWindowTitle("ecmc Mtn Main plot: prefix=" + self.pvPrefixStr + " , mtnId=" + str(self.mtnPluginId) + 
                                ", rate=" + str(self.sampleRate))       
@@ -284,87 +256,66 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         
     ###### Pv monitor callbacks
     def on_change_BuffSze(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['BuffSze'].data_signal.emit(value)
 
     def on_change_ElmCnt(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['ElmCnt'].data_signal.emit(value)
 
     def on_change_PosAct_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['PosAct-Arr'].data_signal.emit(value)
 
-    def on_change_PosSet_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
+    def on_change_PosSet_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):        
         self.pv_signal_cbs['PosSet-Arr'].data_signal.emit(value)
 
     def on_change_PosErr_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['PosErr-Arr'].data_signal.emit(value)
 
     def on_change_Time_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['Time-Arr'].data_signal.emit(value)
 
     def on_change_Ena_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['Ena-Arr'].data_signal.emit(value)
 
     def on_change_EnaAct_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['EnaAct-Arr'].data_signal.emit(value)
 
     def on_change_Bsy_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['Bsy-Arr'].data_signal.emit(value)
 
     def on_change_Exe_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['Exe-Arr'].data_signal.emit(value)
 
     def on_change_TrjSrc_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['TrjSrc-Arr'].data_signal.emit(value)
 
     def on_change_EncSrc_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['EncSrc-Arr'].data_signal.emit(value)
 
     def on_change_AtTrg_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['AtTrg-Arr'].data_signal.emit(value)
 
     def on_change_ErrId_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['ErrId-Arr'].data_signal.emit(value)
 
     def on_change_Mde_RB(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['Mde-RB'].data_signal.emit(value)
 
     def on_change_Cmd_RB(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['Cmd-RB'].data_signal.emit(value)
 
     def on_change_Stat(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['Stat'].data_signal.emit(value)
 
     def on_change_AxCmd_RB(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['AxCmd-RB'].data_signal.emit(value)
 
     def on_change_SmpHz_RB(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['SmpHz-RB'].data_signal.emit(value)
 
     def on_change_TrgCmd_RB(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['TrgCmd-RB'].data_signal.emit(value)
 
     def on_change_EnaCmd_RB(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('On Change')
         self.pv_signal_cbs['EnaCmd-RB'].data_signal.emit(value)
 
 #    def onChangePvMode(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
@@ -421,124 +372,129 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         # IOC_TEST:Plg-Mtn0-TrgCmd-RB
         # IOC_TEST:Plg-Mtn0-EnaCmd-RB
 
-    def sig_cb_BuffSze(self,value):
-        print('HEPP')
+    def sig_cb_BuffSze(self,value):        
+        self.data['BuffSze'] = value
 
     def sig_cb_ElmCnt(self,value):
-        print('HEPP')
+        self.data['ElmCnt'] = value
 
     def sig_cb_PosAct_Arr(self,value):
-        print('HEPP')
+        if(np.size(value)) > 0:
+            self.MtnYDataValid = True
+            self.data['PosAct-Arr'] = value
+            #print('PosAct-Arr:')
+            #print(self.data['PosAct-Arr'])
 
     def sig_cb_PosSet_Arr(self,value):
-        print('HEPP')
+        self.data['PosSet-Arr'] = value
 
     def sig_cb_PosErr_Arr(self,value):
-        print('HEPP')
+        self.data['PosErr-Ar'] = value
 
     def sig_cb_Time_Arr(self,value):
         if(np.size(value)) > 0:
-            self.dataX = value
+            self.data['Time-Arr'] = value
             self.MtnXDataValid = True
+        self.plotAll()
         return
 
-
     def sig_cb_Ena_Arr(self,value):
-        print('HEPP')
+        self.data['Ena-Arr'] = value
 
     def sig_cb_EnaAct_Arr(self,value):
-        print('HEPP')
+        self.data['EnaAct-Arr'] = value
 
     def sig_cb_Bsy_Arr(self,value):
-        print('HEPP')
+        self.data['Bsy-Arr'] = value
 
     def sig_cb_Exe_Arr(self,value):
-        print('HEPP')
+        self.data['Exe-Arr'] = value
 
     def sig_cb_TrjSrc_Arr(self,value):
-        print('HEPP')
+        self.data['TrjSrc-Arr'] = value
 
     def sig_cb_EncSrc_Arr(self,value):
-        print('HEPP')
+        self.data['EncSrc-Arr'] = value
 
     def sig_cb_AtTrg_Arr(self,value):
-        print('HEPP')
+        self.data['AtTrg-Arr'] = value
 
     def sig_cb_ErrId_Arr(self,value):
-        print('HEPP')
+        self.data['ErrId-Arr'] = value
 
-    def sig_cb_Mde_RB(self,value):
-        
+    def sig_cb_Mde_RB(self,value):        
         if value < 1 or value> 2:
             self.modeStr = "NO_MODE"
             print('callbackFuncMode: Error Invalid mode.')
             return
 
-        self.mode = value
-        self.modeCombo.setCurrentIndex(self.mode-1) # Index starta t zero
+        self.data['Mde-RB'] = value
+        self.modeCombo.setCurrentIndex(self.data['Mde-RB']-1) # Index starta t zero
         
-        if self.mode == 1:
+        if self.data['Mde-RB'] == 1:
             self.modeStr = "CONT"
             self.triggBtn.setEnabled(False) # Only enable if mode = TRIGG = 2
                         
-        if self.mode == 2:
+        if self.data['Mde-RB'] == 2:
            self.modeStr = "TRIGG"
-           self.triggBtn.setEnabled(True)
-        
+           self.triggBtn.setEnabled(True)        
         return
 
-
     def sig_cb_Cmd_RB(self,value):
-        print('HEPP')
+        self.data['Cmd-RB'] = value
 
     def sig_cb_Stat(self,value):
-        print('HEPP')
+        self.data['Stat'] = value
 
     def sig_cb_AxCmd_RB(self,value):
-        print('HEPP')
+        self.data['AxCmd-RB'] = value
 
     def sig_cb_SmpHz_RB(self,value):
-        print('HEPP')
+        self.data['SmpHz-RB'] = value
 
     def sig_cb_TrgCmd_RB(self,value):
-        print('HEPP')
+        self.data['TrgCmd-RB'] = value
 
     def sig_cb_EnaCmd_RB(self,value):
-        self.enable = value    
-        if self.enable:
+        self.data['EnaCmd-RB'] = value
+
+        self.data['EnaCmd-RB'] = value    
+        if self.data['EnaCmd-RB']:
           self.enableBtn.setStyleSheet("background-color: green")
         else:
           self.enableBtn.setStyleSheet("background-color: red")
         self.data['EnaCmd-RB'] = value
         return
 
-    def callbackFuncSpectY(self, value):
-        if(np.size(value)) > 0:
-            self.spectY = value
-            self.MtnYDataValid = self.RawXDataValid
-            self.plotAll()            
-        return
 
-    def callbackFuncrawData(self, value):
-        if(np.size(value)) > 0:
-            if (self.rawdataX is None or np.size(value) != np.size(self.rawdataY)) and self.sampleRateValid:
-                self.rawdataX = np.arange(-np.size(value)/self.sampleRate, 0, 1/self.sampleRate)
-                self.RawXDataValid = True
-                
-            self.rawdataY = value
-            self.RawYDataValid = True
-            self.plotAll()
-        return
-
-    def callbackFuncBuffIdAct(self, value):
-        if self.NMtn is None:
-          return
-        if(self.NMtn>0):
-          self.progressBar.setValue(value/self.NMtn*100)
-          if value/self.NMtn*100 < 80 and value/self.NMtn*100 >1:
-            self.MtnYDataValid = False
-            self.RawYDataValid = False
-        return
+#    def callbackFuncSpectY(self, value):
+#        if(np.size(value)) > 0:
+#
+#            self.spectY = value
+#            self.MtnYDataValid = self.RawXDataValid
+#            self.plotAll()            
+#        return
+#
+#    def callbackFuncrawData(self, value):
+#        if(np.size(value)) > 0:
+#            if (self.data['Time-Arr'] is None or np.size(value) != np.size(self.rawdataY)) and self.sampleRateValid:
+#                self.data['Time-Arr'] = np.arange(-np.size(value)/self.sampleRate, 0, 1/self.sampleRate)
+#                self.RawXDataValid = True
+#                
+#            self.rawdataY = value
+#            self.RawYDataValid = True
+#            self.plotAll()
+#        return
+#
+#    def callbackFuncBuffIdAct(self, value):
+#        if self.NMtn is None:
+#          return
+#        if(self.NMtn>0):
+#          self.progressBar.setValue(value/self.NMtn*100)
+#          if value/self.NMtn*100 < 80 and value/self.NMtn*100 >1:
+#            self.MtnYDataValid = False
+#            self.RawYDataValid = False
+#        return
 
     ###### Widget callbacks
     def pauseBtnAction(self):   
@@ -552,14 +508,14 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
             self.pauseBtn.setStyleSheet("background-color: green")
             # Retrigger plots with newest values
-            self.comSignalSpectY.data_signal.emit(self.spectY)
-            self.comSignalRawData.data_signal.emit(self.rawdataY)
+            #self.comSignalSpectY.data_signal.emit(self.spectY)
+            #self.comSignalRawData.data_signal.emit(self.rawdataY)
         return
 
     def enableBtnAction(self):
-        self.enable = not self.enable
-        self.pvs['EnaCmd-RB'].put(self.enable)
-        if self.enable:
+        self.data['EnaCmd-RB'] = not self.data['EnaCmd-RB']
+        self.pvs['EnaCmd-RB'].put(self.data['EnaCmd-RB'])
+        if self.data['EnaCmd-RB']:
           self.enableBtn.setStyleSheet("background-color: green")
         else:
           self.enableBtn.setStyleSheet("background-color: red")
@@ -571,22 +527,13 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
     def zoomBtnAction(self):
         
-        if self.rawdataY is None:
-            return
-        if self.rawdataX is None:
-            return
-        if self.spectY is None:
-            return
-        if self.dataX is None:
-            return
-        if self.axSpect is None:
+        if self.data['Time-Arr'] is None:
             return
 
-        # Spect                
-        self.axSpect.autoscale(enable=True)
-        self.plotSpect(True)
-        # rawdata
-        self.plotRaw(True)
+        if self.data['PosAct-Arr'] is None:
+            return
+        
+        self.plotData(True)
 
         return
 
@@ -619,13 +566,13 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         #    return
         #
         ## File valid                 
-        #self.rawdataX     = npzfile['rawdataX']        
+        #self.data['Time-Arr']     = npzfile['rawdataX']        
         #self.rawdataY     = npzfile['rawdataY']        
         #self.dataX        = npzfile['spectX']          
         #self.spectY       = npzfile['spectY']                  
         #self.sampleRate   = npzfile['sampleRate']      
         #self.NMtn         = npzfile['NMtn']            
-        #self.mode         = npzfile['mode']            
+        #self.data['Mde-RB']         = npzfile['mode']            
         #self.pvPrefixStr  = str(npzfile['pvPrefixStr'])
         #self.mtnPluginId  = npzfile['mtnPluginId']
         #if 'unitRawY' in npzfile:
@@ -649,7 +596,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         #self.sampleRateValid = True
 
 
-        #self.comSignalMode.data_signal.emit(self.mode)
+        #self.comSignalMode.data_signal.emit(self.data['Mde-RB'])
         #self.comSignalX.data_signal.emit(self.dataX)
         #self.comSignalSpectY.data_signal.emit(self.spectY)
         #self.comSignalRawData.data_signal.emit(self.rawdataY)
@@ -671,13 +618,13 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         ## Save all relevant data
         #np.savez(fname[0],
         #         plugin                   = "Mtn",
-        #         rawdataX                 = self.rawdataX,
+        #         rawdataX                 = self.data['Time-Arr'],
         #         rawdataY                 = self.rawdataY,
         #         spectX                   = self.dataX,
         #         spectY                   = self.spectY,
         #         sampleRate               = self.sampleRate,
         #         NMtn                     = self.NMtn,
-        #         mode                     = self.mode,
+        #         mode                     = self.data['Mde-RB'],
         #         pvPrefixStr              = self.pvPrefixStr,
         #         mtnPluginId              = self.mtnPluginId,
         #         unitRawY                 = self.unitRawY,
@@ -691,91 +638,83 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
         return
 
-    def plotAll(self):
-        print("self.MtnYDataValid = " + str(self.MtnYDataValid))
-        print("self.MtnXDataValid = " + str(self.MtnXDataValid))
-        print("self.RawYDataValid = " + str(self.RawYDataValid))
-        print("self.RawXDataValid   = " + str(self.RawXDataValid))
-        
-        if self.MtnYDataValid and self.MtnXDataValid and self.RawYDataValid and self.RawXDataValid:
-          self.plotSpect()
-          self.plotRaw()
-          self.MtnYDataValid = False 
+    def plotAll(self):       
+        if self.MtnYDataValid and self.MtnXDataValid:
+          self.plotData()
+          self.MtnYDataValid = False
           self.RawYDataValid = False
 
     ###### Plotting
-    def plotSpect(self, autozoom=False):
-        if self.dataX is None:
-            return
-        if self.spectY is None:
-            return
-        
-        # create an axis for spectrum
-        if self.axSpect is None:
-           self.axSpect = self.figure.add_subplot(212)
-
-        # plot data 
-        if self.plottedLineSpect is not None:
-            self.plottedLineSpect.remove()
-
-        self.plottedLineSpect, = self.axSpect.plot(self.dataX,self.spectY, 'b*-') 
-        self.axSpect.grid(True)
-
-
-        self.axSpect.set_xlabel("Frequency [Hz]")
-        self.axSpect.set_ylabel(self.labelSpectY + ' ' +self.unitSpectY)        
-
-        if autozoom:
-           ymin = np.min(self.spectY)
-           ymax = np.max(self.spectY)
-           # ensure different values
-           if ymin == ymax:
-               ymin = ymin - 1
-               ymax = ymax + 1   
-           range = ymax - ymin
-           ymax += range * 0.1
-           ymin -= range * 0.1
-           xmin = np.min(self.dataX)
-           xmax = np.max(self.dataX)
-           if xmin == xmax:
-               xmin = xmin - 1
-               xmax = xmax + 1
-           range = xmax - xmin
-           xmax += range * 0.02
-           xmin -= range * 0.02
-           self.axSpect.set_ylim(ymin,ymax)
-           self.axSpect.set_xlim(xmin,xmax)
-
-        # refresh canvas 
-        self.canvas.draw()
-        self.axSpect.autoscale(enable=False)
-
-    def plotRaw(self, autozoom=False):
-        if self.rawdataY is None:
-            return
-
-        if self.rawdataX is None:
+   # def plotSpect(self, autozoom=False):
+   #     if self.dataX is None:
+   #         return
+   #     if self.spectY is None:
+   #         return
+   #     
+   #     # create an axis for spectrum
+   #     if self.axSpect is None:
+   #        self.axSpect = self.figure.add_subplot(212)
+#
+   #     # plot data 
+   #     if self.plottedLineSpect is not None:
+   #         self.plottedLineSpect.remove()
+#
+   #     self.plottedLineSpect, = self.axSpect.plot(self.dataX,self.spectY, 'b*-') 
+   #     self.axSpect.grid(True)
+#
+#
+   #     self.axSpect.set_xlabel("Frequency [Hz]")
+   #     self.axSpect.set_ylabel(self.labelSpectY + ' ' +self.unitSpectY)        
+#
+   #     if autozoom:
+   #        ymin = np.min(self.spectY)
+   #        ymax = np.max(self.spectY)
+   #        # ensure different values
+   #        if ymin == ymax:
+   #            ymin = ymin - 1
+   #            ymax = ymax + 1   
+   #        range = ymax - ymin
+   #        ymax += range * 0.1
+   #        ymin -= range * 0.1
+   #        xmin = np.min(self.dataX)
+   #        xmax = np.max(self.dataX)
+   #        if xmin == xmax:
+   #            xmin = xmin - 1
+   #            xmax = xmax + 1
+   #        range = xmax - xmin
+   #        xmax += range * 0.02
+   #        xmin -= range * 0.02
+   #        self.axSpect.set_ylim(ymin,ymax)
+   #        self.axSpect.set_xlim(xmin,xmax)
+#
+   #     # refresh canvas 
+   #     self.canvas.draw()
+   #     self.axSpect.autoscale(enable=False)
+#
+    def plotData(self, autozoom=False):
+        if self.data['Time-Arr'] is None:
             return
 
-        # create an axis for spectrum
-        if self.axRaw is None:
-           self.axRaw = self.figure.add_subplot(211)
+        if self.data['PosAct-Arr'] is None:
+            return
 
+        # create an axis
+        if self.axAnalog is None:
+           self.axAnalog = self.figure.add_subplot(211)
 
         # plot data 
         if self.plottedLineRaw is not None:
             self.plottedLineRaw.remove()
-
-        self.plottedLineRaw, = self.axRaw.plot(self.rawdataX,self.rawdataY, 'b*-') 
-        self.axRaw.grid(True)
-
-        self.axRaw.set_xlabel('Time [s]')
-        self.axRaw.set_ylabel(self.labelRawY + ' ' + self.unitRawY)
-        self.axRaw.set_title(self.title)
+        self.plottedLineRaw, = self.axAnalog.plot(self.data['Time-Arr'],self.data['PosAct-Arr'], 'b*-') 
+        
+        self.axAnalog.grid(True)        
+        self.axAnalog.set_xlabel('Time [s]')
+        self.axAnalog.set_ylabel(self.labelRawY + ' ' + self.unitRawY)
+        self.axAnalog.set_title(self.title)
 
         if autozoom:
-           ymin = np.min(self.rawdataY)
-           ymax = np.max(self.rawdataY)
+           ymin = np.min(self.data['PosAct-Arr'])
+           ymax = np.max(self.data['PosAct-Arr'])
            # ensure different values
            if ymin == ymax:
                ymin=ymin-1
@@ -783,22 +722,22 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
            range = ymax - ymin
            ymax += range * 0.1
            ymin -= range * 0.1
-           xmin = np.min(self.rawdataX)
-           xmax = np.max(self.rawdataX)
+           xmin = np.min(self.data['Time-Arr'])
+           xmax = np.max(self.data['Time-Arr'])
            if xmin == xmax:
                xmin = xmin - 1
                xmax = xmax + 1
            range = xmax - xmin
            xmax += range * 0.02
            xmin -= range * 0.02
-           self.axRaw.set_ylim(ymin,ymax)
-           self.axRaw.set_xlim(xmin,xmax)
+           self.axAnalog.set_ylim(ymin,ymax)
+           self.axAnalog.set_xlim(xmin,xmax)
     
         # refresh canvas 
         self.canvas.draw()
         self.allowSave = True
         self.saveBtn.setEnabled(True)
-        self.axRaw.autoscale(enable=False)
+        self.axAnalog.autoscale(enable=False)
 
 def printOutHelp():
   print("ecmcMtnMainGui: Plots waveforms of Mtn data (updates on Y data callback). ")
