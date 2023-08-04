@@ -88,8 +88,8 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         for pv in pvBinary:
             self.plottedLineBinary[pv] = None
 
-        for data in self.data:
-            data = None
+        for pv in pvlist:
+            self.data[pv] = None
 
         #Set some default plot colours
         self.plotColor={}
@@ -115,10 +115,10 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.mtnPluginOrigId = mtnPluginId
         self.allowSave = False
         self.path =  '.'
-        self.unitRawY = "[]"
-        self.unitSpectY = "[]"
-        self.labelSpectY = "Amplitude"
-        self.labelRawY = "Raw"
+        self.unitAnalogY  = "[]"
+        self.unitBinaryY  = "[]"
+        self.labelBinaryY = "Binary"
+        self.labelAnalogY = "Analog"
         self.title = ""
         #self.NMtn = 1024
         self.sampleRate = 1000
@@ -546,7 +546,8 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         if self.data['PosAct-Arr'] is None:
             return
         
-        self.plotData(True)
+        self.plotAnalog(True)
+        self.plotBinary(True)
         return
 
     def newModeIndexChanged(self,index):
@@ -588,11 +589,11 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         #self.pvPrefixStr  = str(npzfile['pvPrefixStr'])
         #self.mtnPluginId  = npzfile['mtnPluginId']
         #if 'unitRawY' in npzfile:
-        #  self.unitRawY = str(npzfile['unitRawY'])
+        #  self.unitAnalogY = str(npzfile['unitRawY'])
         #if 'unitSpectY' in npzfile:
         #  self.unitSpectY = str(npzfile['unitSpectY'])
         #if 'labelRawY' in npzfile:
-        #  self.labelRawY = str(npzfile['labelRawY'])
+        #  self.labelAnalogY = str(npzfile['labelRawY'])
         #if 'labelSpectY' in npzfile:
         #  self.labelSpectY = str(npzfile['labelSpectY'])                  
         #if 'title' in npzfile:
@@ -639,9 +640,9 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         #         mode                     = self.data['Mde-RB'],
         #         pvPrefixStr              = self.pvPrefixStr,
         #         mtnPluginId              = self.mtnPluginId,
-        #         unitRawY                 = self.unitRawY,
+        #         unitRawY                 = self.unitAnalogY,
         #         unitSpectY               = self.unitSpectY,
-        #         labelRawY                = self.labelRawY,
+        #         labelRawY                = self.labelAnalogY,
         #         labelSpectY              = self.labelSpectY,
         #         title                    = self.title
         #         )
@@ -674,16 +675,19 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         for pv in pvAnalog:
             if self.plottedLineAnalog[pv] is not None:
                 self.plottedLineAnalog[pv].remove()
-            y = self.data[pv]
-            y_len=len(y)
-            if x_len==y_len:
-                self.plottedLineAnalog[pv], = self.axAnalog.plot(x,y,self.plotColor[pv])  
+            if self.data[pv] is not None:
+                y = self.data[pv]
+                y_len=len(y)
+                if x_len == y_len:
+                     self.plottedLineAnalog[pv], = self.axAnalog.plot(x,y,self.plotColor[pv])  
+                else:
+                    print("Pv length mismatch  (Time=" + str(x_len) + "," + pv + "=" + str(y_len) + ")")
             else:
-                print("Pv length mismatch  (Time=" + str(x_len) + "," + pv + "=" + str(y_len) + ")")
+                print("Data null for pv: " + pv)
 
         self.axAnalog.grid(True)        
         self.axAnalog.set_xlabel('Time [s]')
-        self.axAnalog.set_ylabel(self.labelRawY + ' ' + self.unitRawY)
+        self.axAnalog.set_ylabel(self.labelAnalogY + ' ' + self.unitAnalogY)
         self.axAnalog.set_title(self.title)
 
         if autozoom:
@@ -724,15 +728,26 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         if self.axBinary is None:
            self.axBinary = self.figure.add_subplot(212)
         
-        # plot data 
+        # plot data
+        x = self.data['Time-Arr']
+        x_len = len(x)
         for pv in pvBinary:
             if self.plottedLineBinary[pv] is not None:
                 self.plottedLineBinary[pv].remove()
-            self.plottedLineBinary[pv], = self.axBinary.plot(self.data['Time-Arr'],self.data[pv],self.plotColor[pv])
+            if self.data[pv] is not None:
+                y = self.data[pv]
+                y_len=len(y)
+                if x_len == y_len:
+                     self.plottedLineBinary[pv], = self.axBinary.plot(x,y,self.plotColor[pv])
+                else:
+                    print("Pv length mismatch  (Time=" + str(x_len) + "," + pv + "=" + str(y_len) + ")")
+            else:
+                print("Data null for pv: " + pv)
+
 
         self.axBinary.grid(True)        
         self.axBinary.set_xlabel('Time [s]')
-        self.axBinary.set_ylabel(self.labelRawY + ' ' + self.unitRawY)
+        self.axBinary.set_ylabel(self.labelBinaryY + ' ' + self.unitBinaryY)
         self.axBinary.set_title(self.title)
 
         if autozoom:
