@@ -31,27 +31,40 @@ import matplotlib.pyplot as plt
 import threading
 
 # List of pv names
-pvlist= [ 'BuffSze',
-          'ElmCnt',
-          'PosAct-Arr',
-          'PosSet-Arr',
-          'PosErr-Arr',
-          'Time-Arr',
-          'Ena-Arr',
-          'EnaAct-Arr',
-          'Bsy-Arr',
-          'Exe-Arr',
-          'TrjSrc-Arr',
-          'EncSrc-Arr',
-          'AtTrg-Arr',
-          'ErrId-Arr',
-          'Mde-RB',
-          'Cmd-RB',
-          'Stat',
-          'AxCmd-RB',
-          'SmpHz-RB',
-          'TrgCmd-RB',
-          'EnaCmd-RB' ]
+pvlist = [ 'BuffSze',
+           'ElmCnt',
+           'PosAct-Arr',
+           'PosSet-Arr',
+           'PosErr-Arr',
+           'Time-Arr',
+           'Ena-Arr',
+           'EnaAct-Arr',
+           'Bsy-Arr',
+           'Exe-Arr',
+           'TrjSrc-Arr',
+           'EncSrc-Arr',
+           'AtTrg-Arr',
+           'ErrId-Arr',
+           'Mde-RB',
+           'Cmd-RB',
+           'Stat',
+           'AxCmd-RB',
+           'SmpHz-RB',
+           'TrgCmd-RB',
+           'EnaCmd-RB' ]
+
+pvAnalog = ['PosAct-Arr',
+            'PosSet-Arr',
+            'PosErr-Arr',
+            'ErrId-Arr']
+
+pvBinary = ['Ena-Arr',
+            'EnaAct-Arr',
+            'Bsy-Arr',
+            'Exe-Arr',
+            'TrjSrc-Arr',
+            'EncSrc-Arr',
+            'AtTrg-Arr']
 
 pvmiddlestring='Plg-Mtn'
 
@@ -66,8 +79,34 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.pvs={}
         self.pv_signal_cbs={}
         self.data={}
+        self.plottedLineAnalog={}
+        self.plottedLineBinary={}
+
+        for pv in pvAnalog:
+            self.plottedLineAnalog[pv] = None
+        
+        for pv in pvBinary:
+            self.plottedLineBinary[pv] = None
+
         for data in self.data:
-            data = None;
+            data = None
+
+        #Set some default plot colours
+        self.plotColor={}
+        # Analog
+        self.plotColor['PosAct-Arr']='g'
+        self.plotColor['PosSet-Arr']='b'
+        self.plotColor['PosErr-Arr']='k'
+        self.plotColor['ErrId-Arr']='r'
+        
+        # Binary
+        self.plotColor['Ena-Arr']='b'
+        self.plotColor['EnaAct-Arr']='c'
+        self.plotColor['Bsy-Arr']='r'
+        self.plotColor['Exe-Arr']='m'
+        self.plotColor['TrjSrc-Arr']='g'
+        self.plotColor['EncSrc-Arr']='k'
+        self.plotColor['AtTrg-Arr']='g'
 
         self.offline = False
         self.pvPrefixStr = prefix
@@ -111,11 +150,11 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         return
 
     def createWidgets(self):
-        self.figure = plt.figure()
-        self.plottedLineSpect = None
-        self.plottedLineRaw = None
-        self.axSpect = None
+        self.figure = plt.figure()        
+        #self.plottedLineAnalog = None
+        #self.plottedLineBinary = None
         self.axAnalog = None
+        self.axBinary = None
         self.canvas = FigureCanvas(self.figure)   
         self.toolbar = NavigationToolbar(self.canvas, self) 
         self.pauseBtn = QPushButton(text = 'pause')
@@ -364,7 +403,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.data['PosSet-Arr'] = value
 
     def sig_cb_PosErr_Arr(self,value):
-        self.data['PosErr-Ar'] = value
+        self.data['PosErr-Arr'] = value
 
     def sig_cb_Time_Arr(self,value):
         if(np.size(value)) > 0:
@@ -613,58 +652,12 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
     def plotAll(self):       
         if self.MtnYDataValid and self.MtnXDataValid:
-          self.plotData()
-          self.MtnYDataValid = False
-          self.RawYDataValid = False
+            self.plotAnalog()
+            self.plotBinary()
+            self.MtnYDataValid = False
+            self.RawYDataValid = False
 
-    ###### Plotting
-   # def plotSpect(self, autozoom=False):
-   #     if self.dataX is None:
-   #         return
-   #     if self.spectY is None:
-   #         return
-   #     
-   #     # create an axis for spectrum
-   #     if self.axSpect is None:
-   #        self.axSpect = self.figure.add_subplot(212)
-#
-   #     # plot data 
-   #     if self.plottedLineSpect is not None:
-   #         self.plottedLineSpect.remove()
-#
-   #     self.plottedLineSpect, = self.axSpect.plot(self.dataX,self.spectY, 'b*-') 
-   #     self.axSpect.grid(True)
-#
-#
-   #     self.axSpect.set_xlabel("Frequency [Hz]")
-   #     self.axSpect.set_ylabel(self.labelSpectY + ' ' +self.unitSpectY)        
-#
-   #     if autozoom:
-   #        ymin = np.min(self.spectY)
-   #        ymax = np.max(self.spectY)
-   #        # ensure different values
-   #        if ymin == ymax:
-   #            ymin = ymin - 1
-   #            ymax = ymax + 1   
-   #        range = ymax - ymin
-   #        ymax += range * 0.1
-   #        ymin -= range * 0.1
-   #        xmin = np.min(self.dataX)
-   #        xmax = np.max(self.dataX)
-   #        if xmin == xmax:
-   #            xmin = xmin - 1
-   #            xmax = xmax + 1
-   #        range = xmax - xmin
-   #        xmax += range * 0.02
-   #        xmin -= range * 0.02
-   #        self.axSpect.set_ylim(ymin,ymax)
-   #        self.axSpect.set_xlim(xmin,xmax)
-#
-   #     # refresh canvas 
-   #     self.canvas.draw()
-   #     self.axSpect.autoscale(enable=False)
-#
-    def plotData(self, autozoom=False):
+    def plotAnalog(self, autozoom=False):
         if self.data['Time-Arr'] is None:
             return
 
@@ -676,10 +669,18 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
            self.axAnalog = self.figure.add_subplot(211)
 
         # plot data 
-        if self.plottedLineRaw is not None:
-            self.plottedLineRaw.remove()
-        self.plottedLineRaw, = self.axAnalog.plot(self.data['Time-Arr'],self.data['PosAct-Arr'], 'b*-') 
-        
+        x = self.data['Time-Arr']
+        x_len = len(x)
+        for pv in pvAnalog:
+            if self.plottedLineAnalog[pv] is not None:
+                self.plottedLineAnalog[pv].remove()
+            y = self.data[pv]
+            y_len=len(y)
+            if x_len==y_len:
+                self.plottedLineAnalog[pv], = self.axAnalog.plot(x,y,self.plotColor[pv])  
+            else:
+                print("Pv length mismatch  (Time=" + str(x_len) + "," + pv + "=" + str(y_len) + ")")
+
         self.axAnalog.grid(True)        
         self.axAnalog.set_xlabel('Time [s]')
         self.axAnalog.set_ylabel(self.labelRawY + ' ' + self.unitRawY)
@@ -711,6 +712,55 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.allowSave = True
         self.saveBtn.setEnabled(True)
         self.axAnalog.autoscale(enable=False)
+
+    def plotBinary(self, autozoom=False):
+        if self.data['Time-Arr'] is None:
+            return
+
+        #if self.data['PosAct-Arr'] is None:
+        #    return
+
+        # create an axis
+        if self.axBinary is None:
+           self.axBinary = self.figure.add_subplot(212)
+        
+        # plot data 
+        for pv in pvBinary:
+            if self.plottedLineBinary[pv] is not None:
+                self.plottedLineBinary[pv].remove()
+            self.plottedLineBinary[pv], = self.axBinary.plot(self.data['Time-Arr'],self.data[pv],self.plotColor[pv])
+
+        self.axBinary.grid(True)        
+        self.axBinary.set_xlabel('Time [s]')
+        self.axBinary.set_ylabel(self.labelRawY + ' ' + self.unitRawY)
+        self.axBinary.set_title(self.title)
+
+        if autozoom:
+           ymin = np.min(self.data['PosAct-Arr'])
+           ymax = np.max(self.data['PosAct-Arr'])
+           # ensure different values
+           if ymin == ymax:
+               ymin=ymin-1
+               ymax=ymax+1
+           range = ymax - ymin
+           ymax += range * 0.1
+           ymin -= range * 0.1
+           xmin = np.min(self.data['Time-Arr'])
+           xmax = np.max(self.data['Time-Arr'])
+           if xmin == xmax:
+               xmin = xmin - 1
+               xmax = xmax + 1
+           range = xmax - xmin
+           xmax += range * 0.02
+           xmin -= range * 0.02
+           self.axBinary.set_ylim(ymin,ymax)
+           self.axBinary.set_xlim(xmin,xmax)
+    
+        # refresh canvas 
+        self.canvas.draw()
+        self.allowSave = True
+        self.saveBtn.setEnabled(True)
+        self.axBinary.autoscale(enable=False)
 
 def printOutHelp():
   print("ecmcMtnMainGui: Plots waveforms of Mtn data (updates on Y data callback). ")

@@ -51,7 +51,6 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-Time-Arr"){
   field(NELM, "$(NELM)")
   field(SCAN, "I/O Intr")
   field(TSE,  "0")
-  field(EGU,  "s")
 }
 
 # Axis Enable
@@ -65,7 +64,6 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-Ena-Arr"){
   field(NELM, "$(NELM)")
   field(SCAN, "I/O Intr")
   field(TSE,  "0")
-  field(EGU,  "s")
 }
 
 # Axis Enabled
@@ -79,7 +77,6 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-EnaAct-Arr"){
   field(NELM, "$(NELM)")
   field(SCAN, "I/O Intr")
   field(TSE,  "0")
-  field(EGU,  "s")
 }
 
 # Axis Busy
@@ -93,7 +90,6 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-Bsy-Arr"){
   field(NELM, "$(NELM)")
   field(SCAN, "I/O Intr")
   field(TSE,  "0")
-  field(EGU,  "s")
 }
 
 # Axis Execute
@@ -107,7 +103,6 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-Exe-Arr"){
   field(NELM, "$(NELM)")
   field(SCAN, "I/O Intr")
   field(TSE,  "0")
-  field(EGU,  "s")
 }
 
 # Axis Traj source
@@ -121,7 +116,6 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-TrjSrc-Arr"){
   field(NELM, "$(NELM)")
   field(SCAN, "I/O Intr")
   field(TSE,  "0")
-  field(EGU,  "s")
 }
 
 # Axis Enc source
@@ -135,7 +129,6 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-EncSrc-Arr"){
   field(NELM, "$(NELM)")
   field(SCAN, "I/O Intr")
   field(TSE,  "0")
-  field(EGU,  "s")
 }
 
 # Axis At target
@@ -149,7 +142,6 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-AtTrg-Arr"){
   field(NELM, "$(NELM)")
   field(SCAN, "I/O Intr")
   field(TSE,  "0")
-  field(EGU,  "s")
 }
 
 # Axis Error Id
@@ -157,13 +149,12 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-ErrId-Arr"){
   info(asyn:FIFO, "1000")
   field(DESC, "Error Id")
   field(PINI, "1")
-  field(DTYP, "asynInt8ArrayIn")
+  field(DTYP, "asynInt32ArrayIn")
   field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.error_arr")
-  field(FTVL, "CHAR")
+  field(FTVL, "LONG")
   field(NELM, "$(NELM)")
   field(SCAN, "I/O Intr")
-  field(TSE,  "0")
-  field(EGU,  "s")
+  field(TSE,  "0")  
 }
 
 record(bo,"$(P)Plg-Mtn${INDEX}-EnaCmd-RB"){
