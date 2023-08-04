@@ -349,29 +349,6 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 #        self.comSignalBuffIdAct.data_signal.emit(value)
 
     ###### Signal callbacks
-           # dbgrep *Plg*Mtn*
-        # IOC_TEST:Plg-Mtn0-BuffSze
-        # IOC_TEST:Plg-Mtn0-ElmCnt
-        # IOC_TEST:Plg-Mtn0-PosAct-Arr
-        # IOC_TEST:Plg-Mtn0-PosSet-Arr
-        # IOC_TEST:Plg-Mtn0-PosErr-Arr
-        # IOC_TEST:Plg-Mtn0-Time-Arr
-        # IOC_TEST:Plg-Mtn0-Ena-Arr
-        # IOC_TEST:Plg-Mtn0-EnaAct-Arr
-        # IOC_TEST:Plg-Mtn0-Bsy-Arr
-        # IOC_TEST:Plg-Mtn0-Exe-Arr
-        # IOC_TEST:Plg-Mtn0-TrjSrc-Arr
-        # IOC_TEST:Plg-Mtn0-EncSrc-Arr
-        # IOC_TEST:Plg-Mtn0-AtTrg-Arr
-        # IOC_TEST:Plg-Mtn0-ErrId-Arr
-        # IOC_TEST:Plg-Mtn0-Mde-RB
-        # IOC_TEST:Plg-Mtn0-Cmd-RB
-        # IOC_TEST:Plg-Mtn0-Stat
-        # IOC_TEST:Plg-Mtn0-AxCmd-RB
-        # IOC_TEST:Plg-Mtn0-SmpHz-RB
-        # IOC_TEST:Plg-Mtn0-TrgCmd-RB
-        # IOC_TEST:Plg-Mtn0-EnaCmd-RB
-
     def sig_cb_BuffSze(self,value):        
         self.data['BuffSze'] = value
 
@@ -382,8 +359,6 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         if(np.size(value)) > 0:
             self.MtnYDataValid = True
             self.data['PosAct-Arr'] = value
-            #print('PosAct-Arr:')
-            #print(self.data['PosAct-Arr'])
 
     def sig_cb_PosSet_Arr(self,value):
         self.data['PosSet-Arr'] = value
@@ -525,8 +500,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.pvTrigg.put(True)
         return
 
-    def zoomBtnAction(self):
-        
+    def zoomBtnAction(self):        
         if self.data['Time-Arr'] is None:
             return
 
@@ -534,7 +508,6 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
             return
         
         self.plotData(True)
-
         return
 
     def newModeIndexChanged(self,index):
