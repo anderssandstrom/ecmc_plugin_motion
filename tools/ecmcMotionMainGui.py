@@ -78,12 +78,13 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
     def __init__(self,prefix=None,mtnPluginId=None):        
         super(ecmcMtnMainGui, self).__init__()
 
-        self.pvnames={}
-        self.pvs={}
-        self.pv_signal_cbs={}
-        self.data={}
-        self.plottedLineAnalog={}
-        self.plottedLineBinary={}
+        self.pvnames = {}
+        self.pvs = {}
+        self.pv_signal_cbs = {}
+        self.data = {}
+        self.datalength = {}
+        self.plottedLineAnalog = {}
+        self.plottedLineBinary = {}
 
         for pv in pvAnalog:
             self.plottedLineAnalog[pv] = None
@@ -93,8 +94,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
         for pv in pvlist:
             self.data[pv] = None
-        
-        self.data['test'] = None
+            self.datalength[pv] = 0
 
         #Set some default plot colours
         self.plotColor={}
@@ -252,6 +252,13 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
               print("pvs['SmpHz-RB'].get() failed")
               return
            self.sampleRateValid = True
+           
+           # calc x Array
+           step=1/self.sampleRate
+           
+           self.x = np.arange(-xMaxTime-step,0+step,step)
+           print('x')
+           print(self.x)
 
            self.data['Mde-RB'] = self.pvs['Mde-RB'].get()    
            if self.data['Mde-RB'] is None:
@@ -274,26 +281,26 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
     def addData(self, pvName, values):
         # Check if first assignment
-        if self.data['test'] is None:
-            self.data['test'] = values
+        if self.data[pvName] is None:            
+            self.data[pvName] = values
             return
         
-        self.data['test'].extend(values)
+        self.data[pvName]=np.append(self.data[pvName],values)
         
         # check if delete in beginning is needed
-        currcount = len(self.data['test'])
-        if self.sampleRateValid:
-          print('Sample rate = ' +str(self.sampleRate))
+        currcount = len(self.data[pvName])
+        if self.sampleRateValid:          
           allowedcount = int(xMaxTime * self.sampleRate)
         else:
-          print('Warninf sample rate not defined')
+          print('Warning sample rate not defined, fallback to max 10000 values')
           allowedcount = 10000
-        allowedcount = 100
-        print('currcount = ' + str(currcount) + " allowedcount = "+str(allowedcount))
+        
+        # remove if needed
         if currcount > allowedcount:
-            self.data['test']=self.data['test'][currcount-allowedcount:]
-        print('DATA:')
-        print(self.data['test'])
+            self.data[pvName]=self.data[pvName][currcount-allowedcount:]
+        
+        self.datalength[pvName] = len(self.data[pvName])
+
 
     def buildPvNames(self):        
         # Pv names based on structure:  <prefix>Plugin-Mtn<mtnPluginId>-<suffixname>
@@ -424,45 +431,44 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
     def sig_cb_PosAct_Arr(self,value):
         if(np.size(value)) > 0:
             self.MtnYDataValid = True
-            self.data['PosAct-Arr'] = value
-            self.addData('test',[1,2,3,4,5,6,7,8,9,10])
+            self.addData('PosAct-Arr', value)                        
 
     def sig_cb_PosSet_Arr(self,value):
-        self.data['PosSet-Arr'] = value
+        self.addData('PosSet-Arr', value)
 
     def sig_cb_PosErr_Arr(self,value):
-        self.data['PosErr-Arr'] = value
+        self.addData('PosErr-Arr', value)
 
     def sig_cb_Time_Arr(self,value):
         if(np.size(value)) > 0:
-            self.data['Time-Arr'] = value
+            self.addData('Time-Arr', value)
             self.MtnXDataValid = True
         self.plotAll()
         return
 
     def sig_cb_Ena_Arr(self,value):
-        self.data['Ena-Arr'] = value
+        self.addData('Ena-Arr', value)
 
     def sig_cb_EnaAct_Arr(self,value):
-        self.data['EnaAct-Arr'] = value
+        self.addData('EnaAct-Arr', value)
 
     def sig_cb_Bsy_Arr(self,value):
-        self.data['Bsy-Arr'] = value
+        self.addData('Bsy-Arr', value)
 
     def sig_cb_Exe_Arr(self,value):
-        self.data['Exe-Arr'] = value
+        self.addData('Exe-Arr', value)
 
     def sig_cb_TrjSrc_Arr(self,value):
-        self.data['TrjSrc-Arr'] = value
+        self.addData('TrjSrc-Arr', value)
 
     def sig_cb_EncSrc_Arr(self,value):
-        self.data['EncSrc-Arr'] = value
+        self.addData('EncSrc-Arr', value)
 
     def sig_cb_AtTrg_Arr(self,value):
-        self.data['AtTrg-Arr'] = value
+        self.addData('AtTrg-Arr', value)
 
     def sig_cb_ErrId_Arr(self,value):
-        self.data['ErrId-Arr'] = value
+        self.addData('ErrId-Arr', value)
 
     def sig_cb_Mde_RB(self,value):        
         if value < 1 or value> 2:
@@ -696,20 +702,23 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         # create an axis
         if self.axAnalog is None:
            self.axAnalog = self.figure.add_subplot(211)
-
-        # plot data 
-        x = self.data['Time-Arr']
-        x_len = len(x)
+           self.axAnalog.set_xlim(-10,0)
+        
+        minimum_x=0
+        # plot data                 
         for pv in pvAnalog:
             if self.plottedLineAnalog[pv] is not None:
                 self.plottedLineAnalog[pv].remove()
             if self.data[pv] is not None:
                 y = self.data[pv]
                 y_len=len(y)
-                if x_len == y_len:
-                     self.plottedLineAnalog[pv], = self.axAnalog.plot(x,y,self.plotColor[pv])  
-                else:
-                    print("Pv length mismatch  (Time=" + str(x_len) + "," + pv + "=" + str(y_len) + ")")
+                x_len=len(self.x)
+                self.plottedLineAnalog[pv], = self.axAnalog.plot(self.x[x_len-y_len:],y,self.plotColor[pv])
+
+                minimum_x_temp=-y_len/self.sampleRate
+                if minimum_x_temp < minimum_x:
+                    minimum_x = minimum_x_temp
+
             else:
                 print("Data null for pv: " + pv)
 
@@ -728,8 +737,10 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
            range = ymax - ymin
            ymax += range * 0.1
            ymin -= range * 0.1
-           xmin = np.min(self.data['Time-Arr'])
-           xmax = np.max(self.data['Time-Arr'])
+           #xmin = np.min(self.data['Time-Arr'])
+           xmin=minimum_x
+           #xmax = np.max(self.data['Time-Arr'])
+           xmax = 0
            if xmin == xmax:
                xmin = xmin - 1
                xmax = xmax + 1
@@ -755,20 +766,24 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         # create an axis
         if self.axBinary is None:
            self.axBinary = self.figure.add_subplot(212)
+           self.axBinary.set_xlim(-10,0)
+
         
         # plot data
-        x = self.data['Time-Arr']
-        x_len = len(x)
+        minimum_x = 0
         for pv in pvBinary:
             if self.plottedLineBinary[pv] is not None:
                 self.plottedLineBinary[pv].remove()
             if self.data[pv] is not None:
                 y = self.data[pv]
                 y_len=len(y)
-                if x_len == y_len:
-                     self.plottedLineBinary[pv], = self.axBinary.plot(x,y,self.plotColor[pv])
-                else:
-                    print("Pv length mismatch  (Time=" + str(x_len) + "," + pv + "=" + str(y_len) + ")")
+                x_len=len(self.x)                
+                self.plottedLineBinary[pv], = self.axBinary.plot(self.x[x_len-y_len:],y,self.plotColor[pv])
+                
+                minimum_x_temp=-y_len/self.sampleRate
+                if minimum_x_temp < minimum_x:
+                    minimum_x = minimum_x_temp
+
             else:
                 print("Data null for pv: " + pv)
 
@@ -788,8 +803,10 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
            range = ymax - ymin
            ymax += range * 0.1
            ymin -= range * 0.1
-           xmin = np.min(self.data['Time-Arr'])
-           xmax = np.max(self.data['Time-Arr'])
+           #xmin = np.min(self.data['Time-Arr'])
+           xmin=minimum_x
+           #xmax = np.max(self.data['Time-Arr'])
+           xmax = 0
            if xmin == xmax:
                xmin = xmin - 1
                xmax = xmax + 1
