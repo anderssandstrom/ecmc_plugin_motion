@@ -150,7 +150,7 @@ ecmcMotionPlg::ecmcMotionPlg(int   objIndex,       // index of this object (if s
     printf("Warning selected sample rate faster than ecmc rate, rate will be set to ecmc rate.\n");
     cfgSampleRateHz_ = ecmcSampleRateHz_;
   }
-
+    
   // Se if any data update cycles should be ignored
   // example ecmc 1000Hz, fft 100Hz then ignore 9 cycles (could be strange if not multiples)
   ignoreCycles_ = ecmcSampleRateHz_ / cfgSampleRateHz_ -1;

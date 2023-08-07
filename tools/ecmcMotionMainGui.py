@@ -30,6 +30,9 @@ from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as Navigatio
 import matplotlib.pyplot as plt 
 import threading
 
+# Allow buffering of 10s data, need to add setting for this
+xMaxTime = 10
+
 # List of pv names
 pvlist = [ 'BuffSze',
            'ElmCnt',
@@ -90,6 +93,8 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
         for pv in pvlist:
             self.data[pv] = None
+        
+        self.data['test'] = None
 
         #Set some default plot colours
         self.plotColor={}
@@ -267,8 +272,30 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
            self.setWindowTitle("ecmc Mtn Main plot: prefix=" + self.pvPrefixStr + " , mtnId=" + str(self.mtnPluginId) + 
                                ", rate=" + str(self.sampleRate))       
 
-    def buildPvNames(self):
-        print('HEHEHEHHEH')
+    def addData(self, pvName, values):
+        # Check if first assignment
+        if self.data['test'] is None:
+            self.data['test'] = values
+            return
+        
+        self.data['test'].extend(values)
+        
+        # check if delete in beginning is needed
+        currcount = len(self.data['test'])
+        if self.sampleRateValid:
+          print('Sample rate = ' +str(self.sampleRate))
+          allowedcount = int(xMaxTime * self.sampleRate)
+        else:
+          print('Warninf sample rate not defined')
+          allowedcount = 10000
+        allowedcount = 100
+        print('currcount = ' + str(currcount) + " allowedcount = "+str(allowedcount))
+        if currcount > allowedcount:
+            self.data['test']=self.data['test'][currcount-allowedcount:]
+        print('DATA:')
+        print(self.data['test'])
+
+    def buildPvNames(self):        
         # Pv names based on structure:  <prefix>Plugin-Mtn<mtnPluginId>-<suffixname>
         for pv in pvlist:
             self.pvnames[pv]=self.buildPvName(pv)
@@ -398,6 +425,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         if(np.size(value)) > 0:
             self.MtnYDataValid = True
             self.data['PosAct-Arr'] = value
+            self.addData('test',[1,2,3,4,5,6,7,8,9,10])
 
     def sig_cb_PosSet_Arr(self,value):
         self.data['PosSet-Arr'] = value
@@ -751,8 +779,8 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.axBinary.set_title(self.title)
 
         if autozoom:
-           ymin = np.min(self.data['PosAct-Arr'])
-           ymax = np.max(self.data['PosAct-Arr'])
+           ymin = 0
+           ymax = 1
            # ensure different values
            if ymin == ymax:
                ymin=ymin-1

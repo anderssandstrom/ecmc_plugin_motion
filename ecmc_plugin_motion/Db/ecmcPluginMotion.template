@@ -177,14 +177,14 @@ record(ao,"$(P)Plg-Mtn${INDEX}-AxCmd-RB"){
   field(VAL, "1")
 }
 
-record(ao,"$(P)Plg-Mtn${INDEX}-SmpHz-RB"){
+record(ai,"$(P)Plg-Mtn${INDEX}-SmpHz-RB"){
   info(asyn:READBACK,"1")
   field(DESC, "Sample rate")
-  field(DTYP,"asynInt32")
-  field(OUT, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.samplerate")
-  field(DOL, "0")
+  field(DTYP,"asynFloat64")
+  field(INP, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.samplerate")  
   field(VAL, "1")
   field(EGU, "Hz")
+  field(SCAN, "I/O Intr")
 }
 
 record(ai,"$(P)Plg-Mtn${INDEX}-BuffSze"){
