@@ -180,7 +180,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.graphicsLayoutWidget = pg.GraphicsLayoutWidget()
         #self.graphicsLayout = pg.GraphicsLayout()
         self.plotItemAnalog = self.graphicsLayoutWidget.addPlot(row=0,col=0)
-        self.plotitemBinary = self.graphicsLayoutWidget.addPlot(row=1,col=0)
+        self.plotItemBinary = self.graphicsLayoutWidget.addPlot(row=1,col=0)
         self.pauseBtn = QPushButton(text = 'pause')
         self.pauseBtn.setFixedSize(100, 50)
         self.pauseBtn.clicked.connect(self.pauseBtnAction)        
@@ -785,7 +785,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         
         minimum_x=0
         # plot data 
-        i = 1
+        #i = 1
         for pv in pvAnalog:
             
             if self.data[pv] is not None:
@@ -800,6 +800,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
                      #plotpen.setColor(color)
                      plotpen=pg.mkPen(self.plotColor[pv],width=2)
                      self.plottedLineAnalog[pv] = self.plotItemAnalog.plot(self.x[x_len-y_len:],y,pen=plotpen)
+                     self.plotItemAnalog.showGrid(x=True,y=True)
 
                 #self.plottedLineAnalog[pv], = self.axAnalog.plot(self.x[x_len-y_len:],y,self.plotColor[pv])
                 self.plottedLineAnalog[pv].setData(self.x[x_len-y_len:],y)
@@ -810,7 +811,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
             else:
                 print("Data null for pv: " + pv)
 
-            i = i +1
+            #i = i +1
 
         #self.axAnalog.grid(True)        
         #self.axAnalog.set_xlabel('Time [s]')
@@ -847,42 +848,34 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         #self.axAnalog.autoscale(enable=False)
 
     def plotBinary(self, autozoom=False):
-        return
+
         if self.data['Time-Arr'] is None:
             return
-
-        #if self.data['PosAct-Arr'] is None:
-        #    return
-
-        # create an axis
-        if self.axBinary is None:
-           self.axBinary = self.figure.add_subplot(212)
-           self.axBinary.set_xlim(-10,0)
-
-        
+       
         # plot data
         minimum_x = 0
         for pv in pvBinary:
-            if self.plottedLineBinary[pv] is not None:
-                self.plottedLineBinary[pv].remove()
             if self.data[pv] is not None:
+                x_len=len(self.x)
                 y = self.data[pv]
                 y_len=len(y)
-                x_len=len(self.x)                
-                self.plottedLineBinary[pv], = self.axBinary.plot(self.x[x_len-y_len:],y,self.plotColor[pv])
-                
+                if self.plottedLineBinary[pv] is None:
+                    plotpen=pg.mkPen(self.plotColor[pv],width=2)
+                    self.plottedLineBinary[pv] = self.plotItemBinary.plot(self.x[x_len-y_len:],y,pen=plotpen)
+                    self.plotItemBinary.showGrid(x=True,y=True)
+                    self.plotItemBinary.setXLink(self.plotItemAnalog)
+
+                self.plottedLineBinary[pv].setData(self.x[x_len-y_len:],y)
                 minimum_x_temp=-y_len/self.sampleRate
                 if minimum_x_temp < minimum_x:
                     minimum_x = minimum_x_temp
-
             else:
                 print("Data null for pv: " + pv)
 
-
-        self.axBinary.grid(True)        
-        self.axBinary.set_xlabel('Time [s]')
-        self.axBinary.set_ylabel(self.labelBinaryY + ' ' + self.unitBinaryY)
-        self.axBinary.set_title(self.title)
+        #self.axBinary.grid(True)        
+        #self.axBinary.set_xlabel('Time [s]')
+        #self.axBinary.set_ylabel(self.labelBinaryY + ' ' + self.unitBinaryY)
+        #self.axBinary.set_title(self.title)
 
         if autozoom:
            ymin = -0.1
@@ -904,14 +897,14 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
            range = xmax - xmin
            xmax += range * 0.02
            xmin -= range * 0.02
-           self.axBinary.set_ylim(ymin,ymax)
-           self.axBinary.set_xlim(xmin,xmax)
+           #self.axBinary.set_ylim(ymin,ymax)
+           #self.axBinary.set_xlim(xmin,xmax)
     
         # refresh canvas 
-        self.canvas.draw()
+        #self.canvas.draw()
         self.allowSave = True
         self.saveBtn.setEnabled(True)
-        self.axBinary.autoscale(enable=False)
+        #self.axBinary.autoscale(enable=False)
 
 def printOutHelp():
   print("ecmcMtnMainGui: Plots waveforms of Mtn data (updates on Y data callback). ")
