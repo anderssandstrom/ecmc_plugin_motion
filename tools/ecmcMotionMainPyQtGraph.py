@@ -20,14 +20,15 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import numpy as np
-import matplotlib
-matplotlib.use("Qt5Agg")
-from matplotlib.figure import Figure
-from matplotlib.animation import TimedAnimation
-from matplotlib.lines import Line2D
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-import matplotlib.pyplot as plt 
+#import matplotlib
+#matplotlib.use("Qt5Agg")
+#from matplotlib.figure import Figure
+#from matplotlib.animation import TimedAnimation
+#from matplotlib.lines import Line2D
+#from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+#from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
+#import matplotlib.pyplot as plt 
+import pyqtgraph as pg
 import threading
 
 # Allow buffering of 10s data, need to add setting for this
@@ -99,19 +100,20 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         #Set some default plot colours
         self.plotColor={}
         # Analog
-        self.plotColor['PosAct-Arr']='g'
-        self.plotColor['PosSet-Arr']='b'
-        self.plotColor['PosErr-Arr']='k'
-        self.plotColor['ErrId-Arr']='r'
+        #self.plotColor['PosAct-Arr']='g'
+        #self.plotColor['PosSet-Arr']='b'
+        #self.plotColor['PosErr-Arr']='k'
+        #self.plotColor['ErrId-Arr']='r'
         
+                
         # Binary
-        self.plotColor['Ena-Arr']='b'
-        self.plotColor['EnaAct-Arr']='c'
-        self.plotColor['Bsy-Arr']='r'
-        self.plotColor['Exe-Arr']='m'
-        self.plotColor['TrjSrc-Arr']='y'
-        self.plotColor['EncSrc-Arr']='k'
-        self.plotColor['AtTrg-Arr']='g'
+        #self.plotColor['Ena-Arr']='b'
+        #self.plotColor['EnaAct-Arr']='c'
+        #self.plotColor['Bsy-Arr']='r'
+        #self.plotColor['Exe-Arr']='m'
+        #self.plotColor['TrjSrc-Arr']='y'
+        #self.plotColor['EncSrc-Arr']='k'
+        #self.plotColor['AtTrg-Arr']='g'
 
         self.offline = False
         self.pvPrefixStr = prefix
@@ -155,13 +157,17 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         return
 
     def createWidgets(self):
-        self.figure = plt.figure()        
+        #self.figure = plt.figure()
         #self.plottedLineAnalog = None
         #self.plottedLineBinary = None
         self.axAnalog = None
         self.axBinary = None
-        self.canvas = FigureCanvas(self.figure)   
-        self.toolbar = NavigationToolbar(self.canvas, self) 
+        #self.canvas = FigureCanvas(self.figure)   
+        #self.toolbar = NavigationToolbar(self.canvas, self)
+        self.graphicsLayoutWidget = pg.GraphicsLayoutWidget()
+        #self.graphicsLayout = pg.GraphicsLayout()
+        self.plotItemAnalog = self.graphicsLayoutWidget.addPlot(row=0,col=0)
+        self.plotitemBinary = self.graphicsLayoutWidget.addPlot(row=1,col=0)
         self.pauseBtn = QPushButton(text = 'pause')
         self.pauseBtn.setFixedSize(100, 50)
         self.pauseBtn.clicked.connect(self.pauseBtnAction)        
@@ -197,15 +203,17 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.setGeometry(300, 300, 900, 700)
   
         layoutVert = QVBoxLayout()
-        layoutVert.addWidget(self.toolbar) 
-        layoutVert.addWidget(self.canvas) 
+        #layoutVert.addWidget(self.toolbar) 
+        
+        #layoutVert.addWidget(self.canvas) 
+        layoutVert.addWidget(self.graphicsLayoutWidget) 
 
         layoutControl = QHBoxLayout() 
         layoutControl.addWidget(self.pauseBtn)
         layoutControl.addWidget(self.enableBtn)
         layoutControl.addWidget(self.triggBtn)
         layoutControl.addWidget(self.modeCombo)
-        layoutControl.addWidget(self.zoomBtn)        
+        layoutControl.addWidget(self.zoomBtn)
         layoutControl.addWidget(self.saveBtn)
         layoutControl.addWidget(self.openBtn)
 
@@ -213,10 +221,9 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         frameControl.setFixedHeight(70)
         frameControl.setLayout(layoutControl)
 
-
         layoutVert.addWidget(frameControl)
         layoutVert.addWidget(self.progressBar)
-        self.setLayout(layoutVert)                
+        self.setLayout(layoutVert)
 
     def setStatusOfWidgets(self):
         self.saveBtn.setEnabled(self.allowSave)
@@ -286,6 +293,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
             return
         
         self.data[pvName]=np.append(self.data[pvName],values)
+        
         # check if delete in beginning is needed
         currcount = len(self.data[pvName])
         if self.sampleRateValid:          
@@ -693,27 +701,33 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
     def plotAnalog(self, autozoom=False):
         if self.data['Time-Arr'] is None:
+            print('Error: No data')
             return
 
         if self.data['PosAct-Arr'] is None:
+            print('Error: No data')
             return
 
         # create an axis
-        if self.axAnalog is None:
-           self.axAnalog = self.figure.add_subplot(211)
-           self.axAnalog.set_xlim(-10,0)
+        #if self.axAnalog is None:
+        #   self.axAnalog = self.figure.add_subplot(211)
+        #   self.axAnalog.set_xlim(-10,0)
         
         minimum_x=0
-        # plot data                 
+        # plot data 
+        i = 1
         for pv in pvAnalog:
-            if self.plottedLineAnalog[pv] is not None:
-                self.plottedLineAnalog[pv].remove()
+            
             if self.data[pv] is not None:
+                x_len=len(self.x)
                 y = self.data[pv]
                 y_len=len(y)
-                x_len=len(self.x)
-                self.plottedLineAnalog[pv], = self.axAnalog.plot(self.x[x_len-y_len:],y,self.plotColor[pv])
+                if self.plottedLineAnalog[pv] is None:
+                     #self.plottedLineAnalog[pv].remove()
+                     self.plottedLineAnalog[pv] = self.plotItemAnalog.plot(self.x[x_len-y_len:],y,pen=(i,len(pvAnalog)))
 
+                #self.plottedLineAnalog[pv], = self.axAnalog.plot(self.x[x_len-y_len:],y,self.plotColor[pv])
+                self.plottedLineAnalog[pv].setData(self.x[x_len-y_len:],y)
                 minimum_x_temp=-y_len/self.sampleRate
                 if minimum_x_temp < minimum_x:
                     minimum_x = minimum_x_temp
@@ -721,10 +735,12 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
             else:
                 print("Data null for pv: " + pv)
 
-        self.axAnalog.grid(True)        
-        self.axAnalog.set_xlabel('Time [s]')
-        self.axAnalog.set_ylabel(self.labelAnalogY + ' ' + self.unitAnalogY)
-        self.axAnalog.set_title(self.title)
+            i = i +1
+
+        #self.axAnalog.grid(True)        
+        #self.axAnalog.set_xlabel('Time [s]')
+        #self.axAnalog.set_ylabel(self.labelAnalogY + ' ' + self.unitAnalogY)
+        #self.axAnalog.set_title(self.title)
 
         if autozoom:
            ymin = np.min(self.data['PosAct-Arr'])
@@ -746,16 +762,17 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
            range = xmax - xmin
            xmax += range * 0.02
            xmin -= range * 0.02
-           self.axAnalog.set_ylim(ymin,ymax)
-           self.axAnalog.set_xlim(xmin,xmax)
+           #self.axAnalog.set_ylim(ymin,ymax)
+           #self.axAnalog.set_xlim(xmin,xmax)
     
         # refresh canvas 
-        self.canvas.draw()
+        #self.canvas.draw()
         self.allowSave = True
         self.saveBtn.setEnabled(True)
-        self.axAnalog.autoscale(enable=False)
+        #self.axAnalog.autoscale(enable=False)
 
     def plotBinary(self, autozoom=False):
+        return
         if self.data['Time-Arr'] is None:
             return
 
