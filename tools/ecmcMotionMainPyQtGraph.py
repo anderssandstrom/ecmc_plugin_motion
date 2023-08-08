@@ -736,23 +736,26 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
                 print("Data null for pv: " + pv)
 
         if autozoom:
-           ymin = np.min(self.data['PosAct-Arr'])
-           ymax = np.max(self.data['PosAct-Arr'])
-           # ensure different values
-           if ymin == ymax:
-               ymin=ymin-1
-               ymax=ymax+1
-           range = ymax - ymin
-           ymax += range * 0.1
-           ymin -= range * 0.1           
-           xmin=minimum_x
-           xmax = 0
-           if xmin == xmax:
-               xmin = xmin - 1
-               xmax = xmax + 1
-           range = xmax - xmin
-           xmax += range * 0.02
-           xmin -= range * 0.02
+            ymin = np.min(self.data['PosAct-Arr'])
+            ymax = np.max(self.data['PosAct-Arr'])
+            # ensure different values
+            if ymin == ymax:
+                ymin=ymin-1
+                ymax=ymax+1
+            range = ymax - ymin
+            ymax += range * 0.1
+            ymin -= range * 0.1           
+            xmin = minimum_x
+            xmax = 0
+            if xmin == xmax:
+                xmin = xmin - 1
+                xmax = xmax + 1
+            range = xmax - xmin
+            xmax += range * 0.02
+            xmin -= range * 0.02
+            #self.plotItemAnalog.setYRange(ymin, ymax, padding=0)
+            self.plotItemAnalog.setXRange(xmin, xmax, padding=0)
+
     
         self.allowSave = True
         self.saveBtn.setEnabled(True)
@@ -790,24 +793,19 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
                 print("Data null for pv: " + pv)
 
         if autozoom:
-           ymin = -0.1
-           ymax = 1.1
-           # ensure different values
-           if ymin == ymax:
-               ymin=ymin-1
-               ymax=ymax+1
-           range = ymax - ymin
-           ymax += range * 0.1
-           ymin -= range * 0.1
-           xmin=minimum_x
-           xmax = 0
-           if xmin == xmax:
-               xmin = xmin - 1
-               xmax = xmax + 1
-           range = xmax - xmin
-           xmax += range * 0.02
-           xmin -= range * 0.02
-    
+            ymin = -0.1
+            ymax = 1.1
+            xmin = minimum_x
+            xmax = 0
+            if xmin == xmax:
+                xmin = xmin - 1
+                xmax = xmax + 1
+            range = xmax - xmin
+            xmax += range * 0.02
+            xmin -= range * 0.02
+            self.plotItemBinary.setYRange(ymin, ymax, padding=0)
+            self.plotItemBinary.setXRange(xmin, xmax, padding=0)
+
         self.allowSave = True
         self.saveBtn.setEnabled(True)
 
