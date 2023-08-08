@@ -798,7 +798,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
                      #color=QColor()
                      #color.setNamedColor(self.plotColor[pv])
                      #plotpen.setColor(color)
-                     plotpen=pg.mkPen(self.plotColor[pv])
+                     plotpen=pg.mkPen(self.plotColor[pv],width=2)
                      self.plottedLineAnalog[pv] = self.plotItemAnalog.plot(self.x[x_len-y_len:],y,pen=plotpen)
 
                 #self.plottedLineAnalog[pv], = self.axAnalog.plot(self.x[x_len-y_len:],y,self.plotColor[pv])
