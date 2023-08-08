@@ -732,8 +732,8 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
                         self.plotItemAnalog.removeItem(self.plottedLineAnalog[pv])
                         self.plottedLineAnalog[pv] = None
 
-            else:
-                print("Data null for pv: " + pv)
+            #else:
+            #    print("Data null for pv: " + pv)
 
         if autozoom:
             ymin = np.min(self.data['PosAct-Arr'])
@@ -789,8 +789,8 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
                     if self.plottedLineBinary[pv] is not None:
                         self.plotItemBinary.removeItem(self.plottedLineBinary[pv])
                         self.plottedLineBinary[pv] = None
-            else:
-                print("Data null for pv: " + pv)
+            #else:
+            #    print("Data null for pv: " + pv)
 
         if autozoom:
             ymin = -0.1
