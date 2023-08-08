@@ -100,20 +100,33 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         #Set some default plot colours
         self.plotColor={}
         # Analog
-        #self.plotColor['PosAct-Arr']='g'
-        #self.plotColor['PosSet-Arr']='b'
-        #self.plotColor['PosErr-Arr']='k'
-        #self.plotColor['ErrId-Arr']='r'
+        self.plotColor['PosAct-Arr']='g'
+        self.plotColor['PosSet-Arr']='b'
+        self.plotColor['PosErr-Arr']='r'
+        self.plotColor['ErrId-Arr']='k'
         
-                
+        self.checkboxColor={}
+        self.checkboxColor['PosAct-Arr']='green'
+        self.checkboxColor['PosSet-Arr']='blue'
+        self.checkboxColor['PosErr-Arr']='red'
+        self.checkboxColor['ErrId-Arr']='black'
+        
         # Binary
-        #self.plotColor['Ena-Arr']='b'
-        #self.plotColor['EnaAct-Arr']='c'
-        #self.plotColor['Bsy-Arr']='r'
-        #self.plotColor['Exe-Arr']='m'
-        #self.plotColor['TrjSrc-Arr']='y'
-        #self.plotColor['EncSrc-Arr']='k'
-        #self.plotColor['AtTrg-Arr']='g'
+        self.plotColor['Ena-Arr']='b'
+        self.plotColor['EnaAct-Arr']='c'
+        self.plotColor['Bsy-Arr']='r'
+        self.plotColor['Exe-Arr']='m'
+        self.plotColor['TrjSrc-Arr']='y'
+        self.plotColor['EncSrc-Arr']='k'
+        self.plotColor['AtTrg-Arr']='g'
+
+        self.checkboxColor['Ena-Arr']='blue'
+        self.checkboxColor['EnaAct-Arr']='cyan'
+        self.checkboxColor['Bsy-Arr']='red'
+        self.checkboxColor['Exe-Arr']='magenta'
+        self.checkboxColor['TrjSrc-Arr']='yellow'
+        self.checkboxColor['EncSrc-Arr']='black'
+        self.checkboxColor['AtTrg-Arr']='green'
 
         self.offline = False
         self.pvPrefixStr = prefix
@@ -201,13 +214,14 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
     
         # Fix layout
         self.setGeometry(300, 300, 900, 700)
-  
-        layoutVert = QVBoxLayout()
-        #layoutVert.addWidget(self.toolbar) 
-        
-        #layoutVert.addWidget(self.canvas) 
-        layoutVert.addWidget(self.graphicsLayoutWidget) 
+        layoutHor = QHBoxLayout()
+        layoutVertMain = QVBoxLayout()
+    
+        #layoutVertLeft.addWidget(self.toolbar) 
 
+        #layoutVertLeft.addWidget(self.canvas) 
+
+        # Bottom button section
         layoutControl = QHBoxLayout() 
         layoutControl.addWidget(self.pauseBtn)
         layoutControl.addWidget(self.enableBtn)
@@ -221,9 +235,65 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         frameControl.setFixedHeight(70)
         frameControl.setLayout(layoutControl)
 
-        layoutVert.addWidget(frameControl)
-        layoutVert.addWidget(self.progressBar)
-        self.setLayout(layoutVert)
+        # Centre section
+        framePlots = QFrame(self)
+        layoutHorPlots = QHBoxLayout()
+        framePlots.setLayout(layoutHorPlots)
+
+        # Centre left
+        layoutHorPlots.addWidget(self.graphicsLayoutWidget)
+    
+        # Centre right
+        framePlotsSelection = QFrame(self)
+        layoutVertPlotsSelection = QVBoxLayout()
+        framePlotsSelection.setFixedWidth(150)
+        
+        # Centre right upper (analog selection)
+        framePlotsSelectionUpper = QFrame(self)
+        layoutVertPlotsSelection.setSpacing(0)
+        layoutVertPlotsSelectionUpper = QVBoxLayout()
+        anaSelectLabel=QLabel('Analog:')
+        layoutVertPlotsSelectionUpper.addWidget(anaSelectLabel)
+
+        self.checkBoxListAnalog={}
+        for pv in pvAnalog:
+            self.checkBoxListAnalog[pv] = QCheckBox(pv)            
+            self.checkBoxListAnalog[pv].setStyleSheet("color: " + self.checkboxColor[pv])
+            layoutVertPlotsSelectionUpper.addWidget(self.checkBoxListAnalog[pv])
+
+        layoutVertPlotsSelectionUpper.addSpacing(200)
+
+        framePlotsSelectionUpper.setLayout(layoutVertPlotsSelectionUpper)
+        layoutVertPlotsSelection.addWidget(framePlotsSelectionUpper)
+
+        # Centre right lower (binary selection)
+        framePlotsSelectionLower = QFrame(self)
+        layoutVertPlotsSelectionLower = QVBoxLayout()
+        binSelectLabel=QLabel('Binary:')
+        layoutVertPlotsSelectionLower.addWidget(binSelectLabel)
+        self.checkBoxListBinary={}
+        for pv in pvBinary:
+            self.checkBoxListBinary[pv] = QCheckBox(pv)
+            self.checkBoxListBinary[pv].setStyleSheet("color: " + self.checkboxColor[pv])
+            layoutVertPlotsSelectionLower.addWidget(self.checkBoxListBinary[pv])
+        framePlotsSelectionLower.setLayout(layoutVertPlotsSelectionLower)
+
+        layoutVertPlotsSelectionLower.addSpacing(200)
+        layoutVertPlotsSelection.addWidget(framePlotsSelectionLower)
+
+        framePlotsSelection.setLayout(layoutVertPlotsSelection)
+        layoutHorPlots.addWidget(framePlotsSelection)
+
+
+
+
+
+        layoutVertMain.addWidget(framePlots)
+        layoutVertMain.addWidget(frameControl)
+        layoutVertMain.addWidget(self.progressBar)
+        
+        self.setLayout(layoutVertMain)
+
 
     def setStatusOfWidgets(self):
         self.saveBtn.setEnabled(self.allowSave)
@@ -724,7 +794,12 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
                 y_len=len(y)
                 if self.plottedLineAnalog[pv] is None:
                      #self.plottedLineAnalog[pv].remove()
-                     self.plottedLineAnalog[pv] = self.plotItemAnalog.plot(self.x[x_len-y_len:],y,pen=(i,len(pvAnalog)))
+                     #plotpen=QPen(Qt.green, 3, Qt.SolidLine)
+                     #color=QColor()
+                     #color.setNamedColor(self.plotColor[pv])
+                     #plotpen.setColor(color)
+                     plotpen=pg.mkPen(self.plotColor[pv])
+                     self.plottedLineAnalog[pv] = self.plotItemAnalog.plot(self.x[x_len-y_len:],y,pen=plotpen)
 
                 #self.plottedLineAnalog[pv], = self.axAnalog.plot(self.x[x_len-y_len:],y,self.plotColor[pv])
                 self.plottedLineAnalog[pv].setData(self.x[x_len-y_len:],y)
