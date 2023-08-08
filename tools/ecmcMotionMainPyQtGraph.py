@@ -170,17 +170,14 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         return
 
     def createWidgets(self):
-        #self.figure = plt.figure()
-        #self.plottedLineAnalog = None
-        #self.plottedLineBinary = None
         self.axAnalog = None
         self.axBinary = None
-        #self.canvas = FigureCanvas(self.figure)   
-        #self.toolbar = NavigationToolbar(self.canvas, self)
         self.graphicsLayoutWidget = pg.GraphicsLayoutWidget()
-        #self.graphicsLayout = pg.GraphicsLayout()
+        self.graphicsLayoutWidget.setBackground('w')
         self.plotItemAnalog = self.graphicsLayoutWidget.addPlot(row=0,col=0)
         self.plotItemBinary = self.graphicsLayoutWidget.addPlot(row=1,col=0)
+        self.plotItemBinary.setMouseEnabled(y=False)
+
         self.pauseBtn = QPushButton(text = 'pause')
         self.pauseBtn.setFixedSize(100, 50)
         self.pauseBtn.clicked.connect(self.pauseBtnAction)        
@@ -216,10 +213,6 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.setGeometry(300, 300, 900, 700)
         layoutHor = QHBoxLayout()
         layoutVertMain = QVBoxLayout()
-    
-        #layoutVertLeft.addWidget(self.toolbar) 
-
-        #layoutVertLeft.addWidget(self.canvas) 
 
         # Bottom button section
         layoutControl = QHBoxLayout() 
@@ -257,7 +250,8 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
         self.checkBoxListAnalog={}
         for pv in pvAnalog:
-            self.checkBoxListAnalog[pv] = QCheckBox(pv)            
+            self.checkBoxListAnalog[pv] = QCheckBox(pv)
+            self.checkBoxListAnalog[pv].setChecked(True)
             self.checkBoxListAnalog[pv].setStyleSheet("color: " + self.checkboxColor[pv])
             layoutVertPlotsSelectionUpper.addWidget(self.checkBoxListAnalog[pv])
 
@@ -274,6 +268,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.checkBoxListBinary={}
         for pv in pvBinary:
             self.checkBoxListBinary[pv] = QCheckBox(pv)
+            self.checkBoxListBinary[pv].setChecked(True)
             self.checkBoxListBinary[pv].setStyleSheet("color: " + self.checkboxColor[pv])
             layoutVertPlotsSelectionLower.addWidget(self.checkBoxListBinary[pv])
         framePlotsSelectionLower.setLayout(layoutVertPlotsSelectionLower)
@@ -283,10 +278,6 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
         framePlotsSelection.setLayout(layoutVertPlotsSelection)
         layoutHorPlots.addWidget(framePlotsSelection)
-
-
-
-
 
         layoutVertMain.addWidget(framePlots)
         layoutVertMain.addWidget(frameControl)
@@ -318,11 +309,6 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
            else:
              self.enableBtn.setStyleSheet("background-color: red")
              self.data['EnaCmd-RB'] = False
-   
-           #self.sourceStr = self.pvSource.get(as_string=True)
-           #if self.sourceStr is None:
-           #  print("pvSource.get() failed")
-           #  return
 
            self.sampleRate = self.pvs['SmpHz-RB'].get()
            if self.sampleRate is None:              
@@ -468,36 +454,6 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
     def on_change_EnaCmd_RB(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
         self.pv_signal_cbs['EnaCmd-RB'].data_signal.emit(value)
 
-#    def onChangePvMode(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-#        if self.pause: 
-#            return
-#        self.comSignalMode.data_signal.emit(value)
-#
-#    def onChangePvEnable(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-#        if self.pause: 
-#            return
-#        self.comSignalEnable.data_signal.emit(value)
-#
-#    def onChangeX(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-#        if self.pause: 
-#            return
-#        self.comSignalX.data_signal.emit(value)
-#
-#    def onChangePvSpectY(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-#        if self.pause: 
-#            return
-#        self.comSignalSpectY.data_signal.emit(value)        
-#
-#    def onChangePvrawData(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-#        if self.pause: 
-#            return
-#        self.comSignalRawData.data_signal.emit(value)    
-#
-#    def onChangePvBuffIdAct(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-#        if self.pause: 
-#            return
-#        self.comSignalBuffIdAct.data_signal.emit(value)
-
     ###### Signal callbacks
     def sig_cb_BuffSze(self,value):        
         self.data['BuffSze'] = value
@@ -591,26 +547,6 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.data['EnaCmd-RB'] = value
         return
 
-
-#    def callbackFuncSpectY(self, value):
-#        if(np.size(value)) > 0:
-#
-#            self.spectY = value
-#            self.MtnYDataValid = self.RawXDataValid
-#            self.plotAll()            
-#        return
-#
-#    def callbackFuncrawData(self, value):
-#        if(np.size(value)) > 0:
-#            if (self.data['Time-Arr'] is None or np.size(value) != np.size(self.rawdataY)) and self.sampleRateValid:
-#                self.data['Time-Arr'] = np.arange(-np.size(value)/self.sampleRate, 0, 1/self.sampleRate)
-#                self.RawXDataValid = True
-#                
-#            self.rawdataY = value
-#            self.RawYDataValid = True
-#            self.plotAll()
-#        return
-#
 #    def callbackFuncBuffIdAct(self, value):
 #        if self.NMtn is None:
 #          return
@@ -630,11 +566,8 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
             self.pvPrefixStr = self.pvPrefixOrigStr  # Restore if dataset  was opened
             self.mtnPluginId = self.mtnPluginOrigId  # Restore if dataset  was opened
             self.buildPvNames()
-
             self.pauseBtn.setStyleSheet("background-color: green")
-            # Retrigger plots with newest values
-            #self.comSignalSpectY.data_signal.emit(self.spectY)
-            #self.comSignalRawData.data_signal.emit(self.rawdataY)
+
         return
 
     def enableBtnAction(self):
@@ -777,46 +710,34 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         if self.data['PosAct-Arr'] is None:
             print('Error: No data')
             return
+       
+        minimum_x = 0
 
-        # create an axis
-        #if self.axAnalog is None:
-        #   self.axAnalog = self.figure.add_subplot(211)
-        #   self.axAnalog.set_xlim(-10,0)
-        
-        minimum_x=0
         # plot data 
-        #i = 1
         for pv in pvAnalog:
             
             if self.data[pv] is not None:
                 x_len=len(self.x)
                 y = self.data[pv]
                 y_len=len(y)
-                if self.plottedLineAnalog[pv] is None:
-                     #self.plottedLineAnalog[pv].remove()
-                     #plotpen=QPen(Qt.green, 3, Qt.SolidLine)
-                     #color=QColor()
-                     #color.setNamedColor(self.plotColor[pv])
-                     #plotpen.setColor(color)
-                     plotpen=pg.mkPen(self.plotColor[pv],width=2)
-                     self.plottedLineAnalog[pv] = self.plotItemAnalog.plot(self.x[x_len-y_len:],y,pen=plotpen)
-                     self.plotItemAnalog.showGrid(x=True,y=True)
+                if self.checkBoxListAnalog[pv].isChecked():
 
-                #self.plottedLineAnalog[pv], = self.axAnalog.plot(self.x[x_len-y_len:],y,self.plotColor[pv])
-                self.plottedLineAnalog[pv].setData(self.x[x_len-y_len:],y)
-                minimum_x_temp=-y_len/self.sampleRate
-                if minimum_x_temp < minimum_x:
-                    minimum_x = minimum_x_temp
+                    if self.plottedLineAnalog[pv] is None:
+                         plotpen=pg.mkPen(self.plotColor[pv],width=2)
+                         self.plottedLineAnalog[pv] = self.plotItemAnalog.plot(self.x[x_len-y_len:],y,pen=plotpen)
+                         self.plotItemAnalog.showGrid(x=True,y=True)
+                    else:     
+                        self.plottedLineAnalog[pv].setData(self.x[x_len-y_len:],y)
+                        minimum_x_temp=-y_len/self.sampleRate
+                        if minimum_x_temp < minimum_x:
+                            minimum_x = minimum_x_temp
+                else:
+                    if self.plottedLineAnalog[pv] is not None:
+                        self.plotItemAnalog.removeItem(self.plottedLineAnalog[pv])
+                        self.plottedLineAnalog[pv] = None
 
             else:
                 print("Data null for pv: " + pv)
-
-            #i = i +1
-
-        #self.axAnalog.grid(True)        
-        #self.axAnalog.set_xlabel('Time [s]')
-        #self.axAnalog.set_ylabel(self.labelAnalogY + ' ' + self.unitAnalogY)
-        #self.axAnalog.set_title(self.title)
 
         if autozoom:
            ymin = np.min(self.data['PosAct-Arr'])
@@ -827,10 +748,8 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
                ymax=ymax+1
            range = ymax - ymin
            ymax += range * 0.1
-           ymin -= range * 0.1
-           #xmin = np.min(self.data['Time-Arr'])
+           ymin -= range * 0.1           
            xmin=minimum_x
-           #xmax = np.max(self.data['Time-Arr'])
            xmax = 0
            if xmin == xmax:
                xmin = xmin - 1
@@ -838,14 +757,9 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
            range = xmax - xmin
            xmax += range * 0.02
            xmin -= range * 0.02
-           #self.axAnalog.set_ylim(ymin,ymax)
-           #self.axAnalog.set_xlim(xmin,xmax)
     
-        # refresh canvas 
-        #self.canvas.draw()
         self.allowSave = True
         self.saveBtn.setEnabled(True)
-        #self.axAnalog.autoscale(enable=False)
 
     def plotBinary(self, autozoom=False):
 
@@ -859,23 +773,23 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
                 x_len=len(self.x)
                 y = self.data[pv]
                 y_len=len(y)
-                if self.plottedLineBinary[pv] is None:
-                    plotpen=pg.mkPen(self.plotColor[pv],width=2)
-                    self.plottedLineBinary[pv] = self.plotItemBinary.plot(self.x[x_len-y_len:],y,pen=plotpen)
-                    self.plotItemBinary.showGrid(x=True,y=True)
-                    self.plotItemBinary.setXLink(self.plotItemAnalog)
-
-                self.plottedLineBinary[pv].setData(self.x[x_len-y_len:],y)
-                minimum_x_temp=-y_len/self.sampleRate
-                if minimum_x_temp < minimum_x:
-                    minimum_x = minimum_x_temp
+                if self.checkBoxListBinary[pv].isChecked():
+                    if self.plottedLineBinary[pv] is None:
+                        plotpen=pg.mkPen(self.plotColor[pv],width=2)
+                        self.plottedLineBinary[pv] = self.plotItemBinary.plot(self.x[x_len-y_len:],y,pen=plotpen)
+                        self.plotItemBinary.showGrid(x=True,y=True)
+                        self.plotItemBinary.setXLink(self.plotItemAnalog)
+                    else:
+                        self.plottedLineBinary[pv].setData(self.x[x_len-y_len:],y)
+                        minimum_x_temp=-y_len/self.sampleRate
+                        if minimum_x_temp < minimum_x:
+                            minimum_x = minimum_x_temp
+                else:
+                    if self.plottedLineBinary[pv] is not None:
+                        self.plotItemBinary.removeItem(self.plottedLineBinary[pv])
+                        self.plottedLineBinary[pv] = None
             else:
                 print("Data null for pv: " + pv)
-
-        #self.axBinary.grid(True)        
-        #self.axBinary.set_xlabel('Time [s]')
-        #self.axBinary.set_ylabel(self.labelBinaryY + ' ' + self.unitBinaryY)
-        #self.axBinary.set_title(self.title)
 
         if autozoom:
            ymin = -0.1
@@ -887,9 +801,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
            range = ymax - ymin
            ymax += range * 0.1
            ymin -= range * 0.1
-           #xmin = np.min(self.data['Time-Arr'])
            xmin=minimum_x
-           #xmax = np.max(self.data['Time-Arr'])
            xmax = 0
            if xmin == xmax:
                xmin = xmin - 1
@@ -897,14 +809,9 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
            range = xmax - xmin
            xmax += range * 0.02
            xmin -= range * 0.02
-           #self.axBinary.set_ylim(ymin,ymax)
-           #self.axBinary.set_xlim(xmin,xmax)
     
-        # refresh canvas 
-        #self.canvas.draw()
         self.allowSave = True
         self.saveBtn.setEnabled(True)
-        #self.axBinary.autoscale(enable=False)
 
 def printOutHelp():
   print("ecmcMtnMainGui: Plots waveforms of Mtn data (updates on Y data callback). ")
