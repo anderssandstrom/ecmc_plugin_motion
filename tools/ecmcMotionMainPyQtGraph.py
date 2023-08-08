@@ -170,14 +170,12 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         return
 
     def createWidgets(self):
-        self.axAnalog = None
-        self.axBinary = None
         self.graphicsLayoutWidget = pg.GraphicsLayoutWidget()
         self.graphicsLayoutWidget.setBackground('w')
-        self.plotItemAnalog = self.graphicsLayoutWidget.addPlot(row=0,col=0)
+        self.plotItemAnalog = self.graphicsLayoutWidget.addPlot(row=0,col=0)        
         self.plotItemBinary = self.graphicsLayoutWidget.addPlot(row=1,col=0)
         self.plotItemBinary.setMouseEnabled(y=False)
-
+        self.plotItemBinary.setLabel('bottom', 'Time [s]')
         self.pauseBtn = QPushButton(text = 'pause')
         self.pauseBtn.setFixedSize(100, 50)
         self.pauseBtn.clicked.connect(self.pauseBtnAction)        
@@ -284,7 +282,6 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         layoutVertMain.addWidget(self.progressBar)
         
         self.setLayout(layoutVertMain)
-
 
     def setStatusOfWidgets(self):
         self.saveBtn.setEnabled(self.allowSave)
@@ -721,7 +718,6 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
                 y = self.data[pv]
                 y_len=len(y)
                 if self.checkBoxListAnalog[pv].isChecked():
-
                     if self.plottedLineAnalog[pv] is None:
                          plotpen=pg.mkPen(self.plotColor[pv],width=2)
                          self.plottedLineAnalog[pv] = self.plotItemAnalog.plot(self.x[x_len-y_len:],y,pen=plotpen)
@@ -779,6 +775,8 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
                         self.plottedLineBinary[pv] = self.plotItemBinary.plot(self.x[x_len-y_len:],y,pen=plotpen)
                         self.plotItemBinary.showGrid(x=True,y=True)
                         self.plotItemBinary.setXLink(self.plotItemAnalog)
+                        self.plotItemBinary.setYRange(-0.1, 1.1, padding=0)
+
                     else:
                         self.plottedLineBinary[pv].setData(self.x[x_len-y_len:],y)
                         minimum_x_temp=-y_len/self.sampleRate
