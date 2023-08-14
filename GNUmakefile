@@ -29,16 +29,9 @@ EC_MASTER_LIB = ${EPICS_MODULES}/ECmasterECMC/${ECmasterECMC_VERSION}/R${EPICSVE
 USR_LDFLAGS += -Wl,-rpath=${EC_MASTER_LIB}
 USR_LDFLAGS +=         -L ${EC_MASTER_LIB}
 
-# expression parser
-#exprtk_DIR = ecmc/exprtkSupport/
-#SOURCES += ${exprtk_DIR}exprtkIF.cpp 
-#SOURCES += ${exprtk_DIR}exprtkImp.cpp 
-#SOURCES += ${exprtk_DIR}exprtkWrap.cpp 
-#
-#HEADER += ${exprtk_DIR}/exprtkWrap.h
-#HEADER += ${exprtk_DIR}/exprtkIF.h
-
-SRC_DIR = ecmc_plugin_motion/src
+BASE_DIR = ecmc_plugin_motion
+SRC_DIR = $(BASE_DIR)/src
+DB_DIR =  $(BASE_DIR)/Db
 
 SOURCES += $(SRC_DIR)/ecmcPluginMotion.c
 SOURCES += $(SRC_DIR)/ecmcMotionPlgWrap.cpp
@@ -47,4 +40,7 @@ SOURCES += $(SRC_DIR)/ecmcMotionPlg.cpp
 #SOURCES += $(foreach d,${SRC_DIR}, $(wildcard $d/*.c) $(wildcard $d/*.cpp))
 HEADERS += $(foreach d,${SRC_DIR}, $(wildcard $d/*.h))
 DBDS += $(foreach d,${SRC_DIR}, $(wildcard $d/*.dbd))
+SCRIPTS += $(BASE_DIR)/startup.cmd
+SCRIPTS += $(BASE_DIR)/addMotionObj.cmd
+TEMPLATES += $(wildcard $(DB_DIR)/*.template)
 
