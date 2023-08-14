@@ -33,7 +33,8 @@ epicsEnvSet(ECMC_PLUGIN_FILNAME,"$(ecmc_plugin_motion_DIR)/lib/${EPICS_HOST_ARCH
 epicsEnvSet(ECMC_PLUGIN_CONFIG,"AXIS=${AX};BUFFER_SIZE=${BUFF_SIZE};DBG_PRINT=${DBG=1};ENABLE=${ENA=1};")
 ${SCRIPTEXEC} ${ecmccfg_DIR}loadPlugin.cmd, "PLUGIN_ID=${PLUGIN_ID},FILE=${ECMC_PLUGIN_FILNAME},CONFIG='${ECMC_PLUGIN_CONFIG}', REPORT=${REPORT=1}"
 
-dbLoadRecords(ecmcPluginMotion.template,"P=$(IOC):,INDEX=${ECMC_PLG_MOTION_OBJ_INDEX=0},NELM=${BUFF_SIZE=1000}")
+dbLoadRecords(${ecmc_plugin_motion_TEMPLATES}ecmcPluginMotion.template,"P=$(IOC):,INDEX=${ECMC_PLG_MOTION_OBJ_INDEX=0},NELM=${BUFF_SIZE=1000}")
 
 #- Increase of index (need to keep track in order to load correct db)
 ecmcEpicsEnvSetCalc("ECMC_PLG_MOTION_OBJ_INDEX" ,${ECMC_PLG_MOTION_OBJ_INDEX=0}+1)
+

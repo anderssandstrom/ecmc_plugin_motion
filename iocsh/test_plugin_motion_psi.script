@@ -29,7 +29,7 @@ $(SCRIPTEXEC) ($(ecmccfg_DIR)configureAxis.cmd, CONFIG=./cfg/el7031.ax)
 ## Load plugin: MOTION
 #
 epicsEnvSet(ECMC_PLUGIN_CONFIG,"PLUGIN_ID=1,AX=1,BUFF_SIZE=200,DBG=0,ENA=1")
-require ecmc_plugin_motion sandst_a ${ECMC_PLUGIN_CONFIG}
+require ecmc_plugin_motion sandst_a "${ECMC_PLUGIN_CONFIG}"
 # below needed at ESS but not PSI:
 #${SCRIPTEXEC} ${ecmc_plugin_motion_DIR}startup.cmd "${ECMC_PLUGIN_CONFIG}"
 

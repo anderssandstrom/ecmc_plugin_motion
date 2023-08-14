@@ -31,7 +31,7 @@ USR_LDFLAGS +=         -L ${EC_MASTER_LIB}
 
 BASE_DIR = ecmc_plugin_motion
 SRC_DIR = $(BASE_DIR)/src
-DB_DIR =  $(BASE_DIR)/db
+DB_DIR =  $(BASE_DIR)/Db
 
 SOURCES += $(SRC_DIR)/ecmcPluginMotion.c
 SOURCES += $(SRC_DIR)/ecmcMotionPlgWrap.cpp
