@@ -28,7 +28,7 @@
 
 template <typename T>
 struct dataBuffer {      
-  T *data;
+  T      *data;
   int     dataCounter;
   int     id;
 };
@@ -86,6 +86,7 @@ class ecmcDataBuffer {
     
     initAsyn();
   }
+
   ~ecmcDataBuffer()  {
     delete[] buffer1_.data;
     delete[] buffer2_.data;
@@ -183,7 +184,7 @@ template<> inline void ecmcDataBuffer<epicsInt16>::writeBuffer() {
 }
 
 // specialized for epicsInt32
-template<> inline void ecmcDataBuffer<int32_t>::writeBuffer() {
+template<> inline void ecmcDataBuffer<epicsInt32>::writeBuffer() {
     epicsMutexLock(bufferSwitchMutex_);
     // Write asyn
     asynPort_->lock();
@@ -195,7 +196,7 @@ template<> inline void ecmcDataBuffer<int32_t>::writeBuffer() {
 }
 
 // specialized for epicsInt64
-template<> inline void ecmcDataBuffer<int64_t>::writeBuffer() {
+template<> inline void ecmcDataBuffer<epicsInt64>::writeBuffer() {
     epicsMutexLock(bufferSwitchMutex_);
     // Write asyn
     asynPort_->lock();

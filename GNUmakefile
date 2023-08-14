@@ -5,7 +5,8 @@ MODULE = ecmc_plugin_motion
 BUILDCLASSES = Linux
 ARCH_FILTER = deb10%
 
-EXCLUDE_VERSIONS+=3 7.0.5
+# Run 7.0.6 for now
+EXCLUDE_VERSIONS+=3 7.0.5 7.0.7
 
 IGNORE_MODULES += asynMotor
 IGNORE_MODULES += motorBase
