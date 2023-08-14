@@ -252,6 +252,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
             self.checkBoxListAnalog[pv].setChecked(True)
             self.checkBoxListAnalog[pv].setStyleSheet("color: " + self.checkboxColor[pv])
             layoutVertPlotsSelectionUpper.addWidget(self.checkBoxListAnalog[pv])
+            self.checkBoxListAnalog[pv].toggled.connect(self.stateChangedAnalog)
 
         layoutVertPlotsSelectionUpper.addSpacing(200)
 
@@ -269,6 +270,8 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
             self.checkBoxListBinary[pv].setChecked(True)
             self.checkBoxListBinary[pv].setStyleSheet("color: " + self.checkboxColor[pv])
             layoutVertPlotsSelectionLower.addWidget(self.checkBoxListBinary[pv])
+            self.checkBoxListBinary[pv].toggled.connect(self.stateChangedBinary)
+
         framePlotsSelectionLower.setLayout(layoutVertPlotsSelectionLower)
 
         layoutVertPlotsSelectionLower.addSpacing(200)
@@ -691,6 +694,15 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         #self.path = os.path.dirname(os.path.abspath(fname[0]))
 
         return
+
+    def stateChangedAnalog(self, int):
+       # refresh plots
+       self.plotAnalog()
+
+    
+    def stateChangedBinary(self, int):
+       # refresh plots
+       self.plotBinary()
 
     def plotAll(self):       
         if self.MtnYDataValid and self.MtnXDataValid:
