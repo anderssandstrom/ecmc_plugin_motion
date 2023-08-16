@@ -301,11 +301,10 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         frameMotion = QFrame(self)
         layoutMotionGrid = QGridLayout()
         frameMotion.setLayout(layoutMotionGrid)
-        btn = QPushButton(text = 'Test')
-        btn.clicked.connect(self.openMotorRecordPanel)
-        btn.setFixedSize(100, 50)
-        layoutMotionGrid.addWidget(btn,0,0)
-
+        self.btnMotorRecord = QPushButton(text = 'Motor Record')
+        self.btnMotorRecord.clicked.connect(self.openMotorRecordPanel)
+        self.btnMotorRecord.setFixedSize(100, 50)
+        layoutMotionGrid.addWidget(self.btnMotorRecord,0,0)
 
         label = QLabel('Axis id:')
         self.cmbBxSelectAxis = QComboBox()
@@ -585,14 +584,14 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         prefixPV = epics.PV(axisPrefixPvName)
         axisPrefix = prefixPV.get()
         if axisPrefix is not None:
-            print('prefix of axis:' + axisPrefix)
+            #print('prefix of axis:' + axisPrefix)
             self.axisPrefix = axisPrefix
 
         axisNamePvName = self.pvPrefixStr + pvAxisNamePart1 + str(int(value)) + pvAxisNamePart2
         namePV = epics.PV(axisNamePvName)
         axisName = namePV.get()
         if axisName is not None:
-            print('name of axis:' + axisName)
+            #print('name of axis:' + axisName)
             self.axisName = axisName
 
     def sig_cb_SmpHz_RB(self,value):
