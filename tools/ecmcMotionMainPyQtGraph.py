@@ -21,6 +21,7 @@ from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import numpy as np
 import time
+from ecmcOneMotorGUI import *
 
 import pyqtgraph as pg
 import threading
@@ -65,8 +66,12 @@ pvBinary = ['Ena-Arr',
             'AtTrg-Arr']
 
 # MCU info PVs
-pvAxisCompleteNamePart1 ='MCU-Cfg-AX'
-pvAxisCompleteNamePart2 ='-PfxNam'
+pvAxisPrefixNamePart1 ='MCU-Cfg-AX'
+pvAxisPrefixNamePart2 ='-Pfx'
+
+pvAxisNamePart1 ='MCU-Cfg-AX'
+pvAxisNamePart2 ='-Nam'
+
 pvFistAxisIndexName = 'MCU-Cfg-AX-FrstObjId'
 pvNextAxisIndexNamePart1 = 'MCU-Cfg-AX'
 pvNextAxisIndexNamePart2 = '-NxtObjId'
@@ -297,6 +302,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         layoutMotionGrid = QGridLayout()
         frameMotion.setLayout(layoutMotionGrid)
         btn = QPushButton(text = 'Test')
+        btn.clicked.connect(self.openMotorRecordPanel)
         btn.setFixedSize(100, 50)
         layoutMotionGrid.addWidget(btn,0,0)
 
@@ -575,11 +581,19 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         if id >= 0:
             self.cmbBxSelectAxis.setCurrentIndex(id)
 
-        name = self.pvPrefixStr + pvAxisCompleteNamePart1 + str(int(value)) + pvAxisCompleteNamePart2
-        namePV = epics.PV(name)
-        newName = namePV.get()
-        if newName is not None:
-            print('PV name of axis:' + newName)
+        axisPrefixPvName = self.pvPrefixStr + pvAxisPrefixNamePart1 + str(int(value)) + pvAxisPrefixNamePart2
+        prefixPV = epics.PV(axisPrefixPvName)
+        axisPrefix = prefixPV.get()
+        if axisPrefix is not None:
+            print('prefix of axis:' + axisPrefix)
+            self.axisPrefix = axisPrefix
+
+        axisNamePvName = self.pvPrefixStr + pvAxisNamePart1 + str(int(value)) + pvAxisNamePart2
+        namePV = epics.PV(axisNamePvName)
+        axisName = namePV.get()
+        if axisName is not None:
+            print('name of axis:' + axisName)
+            self.axisName = axisName
 
     def sig_cb_SmpHz_RB(self,value):
         self.data['SmpHz-RB'] = value
@@ -632,6 +646,11 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
     def changeAxisIndex(self,xxx):
         if self.cmbBxSelectAxis.currentData() is not None:
             self.pvs['AxCmd-RB'].put(self.cmbBxSelectAxis.currentData(), use_complete=True)
+
+    def openMotorRecordPanel(self,xxx):
+        self.dialog = MotorPanel(self,self.axisPrefix ,self.axisName)
+        self.dialog.resize(500, 900)
+        self.dialog.show()
 
     ###### Widget callbacks
     def pauseBtnAction(self):   
