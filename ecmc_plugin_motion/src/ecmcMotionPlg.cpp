@@ -894,9 +894,9 @@ asynStatus ecmcMotionPlg::writeInt32(asynUser *pasynUser, epicsInt32 value) {
     setEnable(value > 0);
     return asynSuccess;
   } else if( function == asynAxisId_){
-    return setAxis(value) ? asynSuccess : asynError;
+    return setAxis(value) > 0 ? asynSuccess : asynError;
   } else if( function == asynModeId_){
-    return setMode((TRIGG_MODE)value) ? asynSuccess : asynError;    
+    return setMode((TRIGG_MODE)value) > 0 ? asynSuccess : asynError;    
   } else if( function == asynModeId_){
     return setTrigg(value) ? asynSuccess :asynError;    
   }
@@ -908,6 +908,9 @@ asynStatus ecmcMotionPlg::readInt32(asynUser *pasynUser, epicsInt32 *value) {
   int function = pasynUser->reason;
   if( function == asynEnableId_ ) {
     *value = cfgEnable_;
+    return asynSuccess;
+  } else if( function == asynAxisId_){
+    *value = cfgAxisIndex_;
     return asynSuccess;
   } else if( function == asynTriggId_ ){
     *value = triggOnce_;
@@ -949,16 +952,25 @@ asynStatus  ecmcMotionPlg::readFloat64(asynUser *pasynUser, epicsFloat64 *value)
 int ecmcMotionPlg::setAxis(int axisId) {
   ecmcAxisBase *temp= (ecmcAxisBase*) getAxisPointer(axisId);
   if(!temp) {
-    printf("Warning selected axis index out of range.\n");    
-    return ECMC_PLUGIN_MOTION_ERROR_AXIS_OUT_OF_RANGE;
+    printf("Warning selected axis index out of range.\n");
+    //set old value again
+    setParamAlarmStatus(asynAxisId_,1);
+    setParamAlarmSeverity(asynAxisId_,1);
+    setIntegerParam(asynAxisId_, (epicsInt32)cfgAxisIndex_);
+    callParamCallbacks();
+    return ECMC_PLUGIN_MOTION_ERROR_AXIS_OUT_OF_RANGE;    
   }
-  
+
   epicsMutexLock(axisMutex_);
   clearBuffers();
   axis_ = temp;
   cfgAxisIndex_ = axisId;
   epicsMutexUnlock(axisMutex_);
-  
+
+  setParamAlarmStatus(asynAxisId_,0);
+  setParamAlarmSeverity(asynAxisId_,0);
+  setIntegerParam(asynAxisId_, (epicsInt32)cfgAxisIndex_);
+  callParamCallbacks();
   return 0;  
 }
 
