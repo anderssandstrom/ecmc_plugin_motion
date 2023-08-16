@@ -87,7 +87,6 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.datalength = {}
         self.plottedLineAnalog = {}
         self.plottedLineBinary = {}
-        self.axisList = []
 
         for pv in pvAnalog:
             self.plottedLineAnalog[pv] = None
@@ -572,11 +571,10 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         print('Axis Id Value: ' + str(value))
         self.data['AxCmd-RB'] = value                
         
-        i = 0
-        for ax in self.axisList:
-            if ax==value:
-                self.cmbBxSelectAxis.setCurrentIndex(i)
-            i+=1
+        id = self.cmbBxSelectAxis.findText(str(int(value)))
+        if id >= 0:
+            self.cmbBxSelectAxis.setCurrentIndex(id)
+
         name = self.pvPrefixStr + pvAxisCompleteNamePart1 + str(int(value)) + pvAxisCompleteNamePart2
         namePV = epics.PV(name)
         newName = namePV.get()
@@ -617,25 +615,23 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
             print('ERROR: First Axis Index PV not found.') 
             return
 
-        self.axisList.append(axId)
-        print('First Axis Index:' + str(axId))
-
+        self.cmbBxSelectAxis.clear()        
+        self.cmbBxSelectAxis.addItem(str(int(axId)))
+        #print('First Axis Index:' + str(axId))
+        
         while axId >= 0:
            # Get next axis id
            pvName = self.pvPrefixStr + pvNextAxisIndexNamePart1 + str(int(axId)) + pvNextAxisIndexNamePart2
-           print('axislist pvname: ' + pvName)
+           #print('axislist pvname: ' + pvName)
            axIdPV = epics.PV(pvName)
            axId = axIdPV.get()
            
-           if axId > 0:
-              self.axisList.append(axId)
-
-        self.cmbBxSelectAxis.clear()
-        for ax in self.axisList:
-            self.cmbBxSelectAxis.addItem(str(int(ax)))
+           if axId > 0:              
+              self.cmbBxSelectAxis.addItem(str(int(ax)))
 
     def changeAxisIndex(self,xxx):
-        self.pvs['AxCmd-RB'].put(self.cmbBxSelectAxis.currentData(), use_complete=True)
+        if self.cmbBxSelectAxis.currentData() is not None:
+            self.pvs['AxCmd-RB'].put(self.cmbBxSelectAxis.currentData(), use_complete=True)
 
     ###### Widget callbacks
     def pauseBtnAction(self):   
