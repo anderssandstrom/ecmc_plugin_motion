@@ -20,14 +20,8 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import numpy as np
-#import matplotlib
-#matplotlib.use("Qt5Agg")
-#from matplotlib.figure import Figure
-#from matplotlib.animation import TimedAnimation
-#from matplotlib.lines import Line2D
-#from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-#from matplotlib.backends.backend_qt5agg import NavigationToolbar2QT as NavigationToolbar
-#import matplotlib.pyplot as plt 
+import time
+
 import pyqtgraph as pg
 import threading
 
@@ -70,6 +64,13 @@ pvBinary = ['Ena-Arr',
             'EncSrc-Arr',
             'AtTrg-Arr']
 
+# MCU info PVs
+pvAxisCompleteNamePart1 ='MCU-Cfg-AX'
+pvAxisCompleteNamePart2 ='-PfxNam'
+pvFistAxisIndexName = 'MCU-Cfg-AX-FrstObjId'
+pvNextAxisIndexNamePart1 = 'MCU-Cfg-AX'
+pvNextAxisIndexNamePart2 = '-NxtObjId'
+
 pvmiddlestring='Plg-Mtn'
 
 class comSignal(QObject):
@@ -86,6 +87,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.datalength = {}
         self.plottedLineAnalog = {}
         self.plottedLineBinary = {}
+        self.axisList = []
 
         for pv in pvAnalog:
             self.plottedLineAnalog[pv] = None
@@ -174,6 +176,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.graphicsLayoutWidget.setBackground('w')
         self.plotItemAnalog = self.graphicsLayoutWidget.addPlot(row=0,col=0)        
         self.plotItemBinary = self.graphicsLayoutWidget.addPlot(row=1,col=0)
+        self.plotItemBinary.setFixedHeight(150)
         self.plotItemBinary.setMouseEnabled(y=False)
         self.plotItemBinary.setLabel('bottom', 'Time [s]')
         self.pauseBtn = QPushButton(text = 'pause')
@@ -208,8 +211,12 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.progressBar.setFixedHeight(20)
     
         # Fix layout
-        self.setGeometry(300, 300, 900, 700)
-        layoutHor = QHBoxLayout()
+        self.setGeometry(300, 300, 1200, 900)
+
+        
+        frameMainLeft = QFrame(self)
+        #frameHorMainLeft.setLayout(layoutHorMain)
+
         layoutVertMain = QVBoxLayout()
 
         # Bottom button section
@@ -243,7 +250,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         framePlotsSelectionUpper = QFrame(self)
         layoutVertPlotsSelection.setSpacing(0)
         layoutVertPlotsSelectionUpper = QVBoxLayout()
-        anaSelectLabel=QLabel('Analog:')
+        anaSelectLabel = QLabel('Analog:')
         layoutVertPlotsSelectionUpper.addWidget(anaSelectLabel)
 
         self.checkBoxListAnalog={}
@@ -274,7 +281,8 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
         framePlotsSelectionLower.setLayout(layoutVertPlotsSelectionLower)
 
-        layoutVertPlotsSelectionLower.addSpacing(200)
+        layoutVertPlotsSelection.addSpacing(200)
+
         layoutVertPlotsSelection.addWidget(framePlotsSelectionLower)
 
         framePlotsSelection.setLayout(layoutVertPlotsSelection)
@@ -283,8 +291,31 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         layoutVertMain.addWidget(framePlots)
         layoutVertMain.addWidget(frameControl)
         layoutVertMain.addWidget(self.progressBar)
-        
-        self.setLayout(layoutVertMain)
+         
+        frameMainLeft.setLayout(layoutVertMain)        
+
+        frameMotion = QFrame(self)
+        layoutMotionGrid = QGridLayout()
+        frameMotion.setLayout(layoutMotionGrid)
+        btn = QPushButton(text = 'Test')
+        btn.setFixedSize(100, 50)
+        layoutMotionGrid.addWidget(btn,0,0)
+
+
+        label = QLabel('Axis id:')
+        self.cmbBxSelectAxis = QComboBox()
+        self.cmbBxSelectAxis.currentIndexChanged.connect(self.changeAxisIndex)
+
+        layoutMotionGrid.addWidget(label,1,0)
+        layoutMotionGrid.addWidget(self.cmbBxSelectAxis,1,1)
+
+
+        layoutVertMain.addWidget(frameMotion)
+        layoutMain = QHBoxLayout()
+        layoutMain.addWidget(frameMainLeft)
+        layoutMain.addWidget(frameMotion)
+
+        self.setLayout(layoutMain)
 
     def setStatusOfWidgets(self):
         self.saveBtn.setEnabled(self.allowSave)
@@ -327,20 +358,28 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
            if self.data['Mde-RB'] is None:
              print("pvs['Mde-RB'].get() failed")
              return
-
+           
+           # Mode
            self.modeStr = "NO_MODE"
            self.triggBtn.setEnabled(False) # Only enable if mode = TRIGG = 2
            if self.data['Mde-RB'] == 1:
                self.modeStr = "CONT"
-               self.modeCombo.setCurrentIndex(self.data['Mde-RB']-1) # Index starta t zero
+               self.modeCombo.setCurrentIndex(self.data['Mde-RB']-1) # Index start at zero
    
            if self.data['Mde-RB'] == 2:
                self.modeStr = "TRIGG"
                self.triggBtn.setEnabled(True)
-               self.modeCombo.setCurrentIndex(self.data['Mde-RB']-1) # Index starta t zero
-   
+               self.modeCombo.setCurrentIndex(self.data['Mde-RB']-1) # Index start at zero
+           
+           #if self.data['AxCmd-RB'] is not None:
+           #   self.cmbBxSelectAxis.setValue(int(self.data['AxCmd-RB']))
+           #else:
+           #   self.cmbBxSelectAxis.setValue(1)
+
            self.setWindowTitle("ecmc Mtn Main plot: prefix=" + self.pvPrefixStr + " , mtnId=" + str(self.mtnPluginId) + 
-                               ", rate=" + str(self.sampleRate))       
+                               ", rate=" + str(self.sampleRate))
+           self.readAxisList()
+
 
     def addData(self, pvName, values):
         # Check if first assignment
@@ -528,7 +567,21 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.data['Stat'] = value
 
     def sig_cb_AxCmd_RB(self,value):
-        self.data['AxCmd-RB'] = value
+        if value is None:
+            return
+        print('Axis Id Value: ' + str(value))
+        self.data['AxCmd-RB'] = value                
+        
+        i = 0
+        for ax in self.axisList:
+            if ax==value:
+                self.cmbBxSelectAxis.setCurrentIndex(i)
+            i+=1
+        name = self.pvPrefixStr + pvAxisCompleteNamePart1 + str(int(value)) + pvAxisCompleteNamePart2
+        namePV = epics.PV(name)
+        newName = namePV.get()
+        if newName is not None:
+            print('PV name of axis:' + newName)
 
     def sig_cb_SmpHz_RB(self,value):
         self.data['SmpHz-RB'] = value
@@ -549,23 +602,40 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
     # State chenge for Analog checkboxes
     def checkBoxStateChangedAnalog(self, int):
-       # refresh plots
-       self.plotAnalog()
+        # refresh plots
+        self.plotAnalog()
 
     # State chenge for Binary checkboxes
     def checkBoxStateChangedBinary(self, int):
-       # refresh plots
-       self.plotBinary()
+        # refresh plots
+        self.plotBinary()
+    
+    def readAxisList(self):        
+        axIdPV = epics.PV(self.pvPrefixStr + pvFistAxisIndexName)
+        axId = axIdPV.get()        
+        if axId is None:
+            print('ERROR: First Axis Index PV not found.') 
+            return
 
-#    def callbackFuncBuffIdAct(self, value):
-#        if self.NMtn is None:
-#          return
-#        if(self.NMtn>0):
-#          self.progressBar.setValue(value/self.NMtn*100)
-#          if value/self.NMtn*100 < 80 and value/self.NMtn*100 >1:
-#            self.MtnYDataValid = False
-#            self.RawYDataValid = False
-#        return
+        self.axisList.append(axId)
+        print('First Axis Index:' + str(axId))
+
+        while axId >= 0:
+           # Get next axis id
+           pvName = self.pvPrefixStr + pvNextAxisIndexNamePart1 + str(int(axId)) + pvNextAxisIndexNamePart2
+           print('axislist pvname: ' + pvName)
+           axIdPV = epics.PV(pvName)
+           axId = axIdPV.get()
+           
+           if axId > 0:
+              self.axisList.append(axId)
+
+        self.cmbBxSelectAxis.clear()
+        for ax in self.axisList:
+            self.cmbBxSelectAxis.addItem(str(int(ax)))
+
+    def changeAxisIndex(self,xxx):
+        self.pvs['AxCmd-RB'].put(self.cmbBxSelectAxis.currentData(), use_complete=True)
 
     ###### Widget callbacks
     def pauseBtnAction(self):   
