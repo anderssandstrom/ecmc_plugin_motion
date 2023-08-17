@@ -35,6 +35,7 @@
 #define ECMC_PLUGIN_ASYN_ERROR_DATA       "error_arr"
 #define ECMC_PLUGIN_ASYN_BUFF_SIZE        "buff_size"
 #define ECMC_PLUGIN_ASYN_ELEMENTS_IN_BUFF "elem_count"
+#define ECMC_PLUGIN_ASYN_STATUSWD_DATA    "statuswd_arr"
 
 #include <sstream>
 
@@ -215,6 +216,11 @@ ecmcMotionPlg::ecmcMotionPlg(int   objIndex,       // index of this object (if s
                                                       cfgArraySize_,
                                                       cfgDbgMode_,
                                                       ECMC_PLUGIN_ASYN_ERROR_DATA,
+                                                      this);
+  statusWdBuffer_    =  new ecmcDataBuffer<epicsInt32>(objectId_,12,
+                                                      cfgArraySize_,
+                                                      cfgDbgMode_,
+                                                      ECMC_PLUGIN_ASYN_STATUSWD_DATA,
                                                       this);
 
   axis_ = (ecmcAxisBase*) getAxisPointer(cfgAxisIndex_);
@@ -473,6 +479,7 @@ void ecmcMotionPlg::clearBuffers() {
   atTargetBuffer_->clear();
   errorIdBuffer_->clear();
   xPosBuffer_->clear();
+  statusWdBuffer_->clear();
 }
 
 void ecmcMotionPlg::printEcDataArray(uint8_t*  data, 
@@ -847,6 +854,9 @@ void ecmcMotionPlg::executeMotionObject() {
   atTargetBuffer_->addData(tempAxisStat->onChangeData.statusWd.attarget);
   errorIdBuffer_->addData(tempAxisStat->onChangeData.error);
 
+  epicsInt32 *temp=(epicsInt32*)&(tempAxisStat->onChangeData.statusWd);  // A bit nasty
+  statusWdBuffer_->addData(*temp);
+
   xTime_+=xdt_;
   xPosBuffer_->addData(xTime_);  // Always relative within one buffer
 
@@ -1028,14 +1038,15 @@ void ecmcMotionPlg::writeBuffers() {
   encSourceBuffer_->writeBuffer();
   atTargetBuffer_->writeBuffer();
   errorIdBuffer_->writeBuffer();
+  statusWdBuffer_->writeBuffer();
+
   // Always write x last if triggering is needed
   xPosBuffer_->writeBuffer();
 }
 
 // triggered by ecmc RT thread
 void ecmcMotionPlg::switchBuffers() {
-
-// switch in new empty buffer while data is stored in the other.
+  // switch in new empty buffer while data is stored in the other.
   actPosBuffer_->switchBuffer();
   setPosBuffer_->switchBuffer();
   diffPosBuffer_->switchBuffer();
@@ -1047,5 +1058,7 @@ void ecmcMotionPlg::switchBuffers() {
   encSourceBuffer_->switchBuffer();
   atTargetBuffer_->switchBuffer();
   errorIdBuffer_->switchBuffer();
+  statusWdBuffer_->switchBuffer();
   xPosBuffer_->switchBuffer();
 }
+

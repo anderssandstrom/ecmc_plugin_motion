@@ -157,6 +157,19 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-ErrId-Arr"){
   field(TSE,  "0")  
 }
 
+# Axis Error Id
+record(waveform,"$(P)Plg-Mtn${INDEX}-Stat-Arr"){
+  info(asyn:FIFO, "1000")
+  field(DESC, "Status wd")
+  field(PINI, "1")
+  field(DTYP, "asynInt32ArrayIn")
+  field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.statuswd_arr")
+  field(FTVL, "LONG")
+  field(NELM, "$(NELM)")
+  field(SCAN, "I/O Intr")
+  field(TSE,  "0")  
+}
+
 record(bo,"$(P)Plg-Mtn${INDEX}-EnaCmd-RB"){
   info(asyn:READBACK,"1")
   field(DESC, "Plg Enable")

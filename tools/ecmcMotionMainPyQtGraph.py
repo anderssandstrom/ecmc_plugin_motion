@@ -44,6 +44,7 @@ pvlist = [ 'BuffSze',
            'EncSrc-Arr',
            'AtTrg-Arr',
            'ErrId-Arr',
+           'Stat-Arr',
            'Mde-RB',
            'Cmd-RB',
            'Stat',
@@ -55,7 +56,8 @@ pvlist = [ 'BuffSze',
 pvAnalog = ['PosAct-Arr',
             'PosSet-Arr',
             'PosErr-Arr',
-            'ErrId-Arr']
+            'ErrId-Arr',
+            'Stat-Arr']
 
 pvBinary = ['Ena-Arr',
             'EnaAct-Arr',
@@ -110,13 +112,15 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.plotColor['PosSet-Arr']='b'
         self.plotColor['PosErr-Arr']='r'
         self.plotColor['ErrId-Arr']='k'
+        self.plotColor['Stat-Arr']='m'
         
         self.checkboxColor={}
         self.checkboxColor['PosAct-Arr']='green'
         self.checkboxColor['PosSet-Arr']='blue'
         self.checkboxColor['PosErr-Arr']='red'
         self.checkboxColor['ErrId-Arr']='black'
-        
+        self.checkboxColor['Stat-Arr']='magenta'
+
         # Binary
         self.plotColor['Ena-Arr']='b'
         self.plotColor['EnaAct-Arr']='c'
@@ -476,6 +480,9 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
     def on_change_ErrId_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
         self.pv_signal_cbs['ErrId-Arr'].data_signal.emit(value)
 
+    def on_change_Stat_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
+        self.pv_signal_cbs['Stat-Arr'].data_signal.emit(value)
+
     def on_change_Mde_RB(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
         self.pv_signal_cbs['Mde-RB'].data_signal.emit(value)
 
@@ -545,6 +552,9 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
     def sig_cb_ErrId_Arr(self,value):
         self.addData('ErrId-Arr', value)
+
+    def sig_cb_Stat_Arr(self,value):
+        self.addData('Stat-Arr', value)
 
     def sig_cb_Mde_RB(self,value):        
         if value < 1 or value> 2:

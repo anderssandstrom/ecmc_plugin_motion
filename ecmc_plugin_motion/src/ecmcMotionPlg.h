@@ -155,6 +155,7 @@ class ecmcMotionPlg : public asynPortDriver {
   ecmcDataBuffer<epicsInt8>    *encSourceBuffer_;
   ecmcDataBuffer<epicsInt8>    *atTargetBuffer_;
   ecmcDataBuffer<epicsInt32>   *errorIdBuffer_;
+  ecmcDataBuffer<epicsInt32>   *statusWdBuffer_;
 
   bool                  bTriggInProgress_;
   double                xdt_;
