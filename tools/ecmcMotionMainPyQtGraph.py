@@ -13,19 +13,16 @@
 #*************************************************************************
 
 import sys
-import os
 import epics
 from PyQt5.QtWidgets import *
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
 import numpy as np
-import time
 from ecmcOneMotorGUI import *
-
 import pyqtgraph as pg
-import threading
 from ecmcPvDataItem import *
+from ecmcParseAxisStatusWord import *
 
 # Allow buffering of 10s data, need to add setting for this
 xMaxTime = 10
@@ -85,7 +82,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
     def __init__(self,prefix="IOC_TEST:",mtnPluginId=0):
         super(ecmcMtnMainGui, self).__init__()        
         self.pvItems           = {}
-
+        self.parseAxisStaWd    = ecmcParseAxisStatusWord()  
         self.plottedLineAnalog = {}
         self.plottedLineBinary = {}
 
@@ -212,6 +209,8 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.pvItems['Mde-RB'].regExtSigCallback(self.sig_cb_Mde_RB)
         self.pvItems['AxCmd-RB'].regExtSigCallback(self.sig_cb_AxCmd_RB)
         self.pvItems['EnaCmd-RB'].regExtSigCallback(self.sig_cb_EnaCmd_RB)
+        self.pvItems['Stat-Arr'].regExtSigCallback(self.sig_cb_Stat_Arr)
+
         # Example calls to ecmcPvDataItem:
         #self.testPV.regExtSigCallback(self.testSigCallback)
         #self.testPV.regExtPvMonCallback(self.testPVMonCallback)
@@ -435,8 +434,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         if value is None:
             return
         print('Axis Id Value: ' + str(value))
-        
-        
+
         id = self.cmbBxSelectAxis.findText(str(int(value)))
         if id >= 0:
             self.cmbBxSelectAxis.setCurrentIndex(id)
@@ -460,6 +458,14 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         else:
           self.enableBtn.setStyleSheet("background-color: red")        
         return
+
+    def sig_cb_Stat_Arr(self,value):
+
+        bindata = self.parseAxisStaWd.convert(value)
+        #bindata=self.pvItems['Stat-Arr'].binaryRepr(value)
+        print('Binary data: ' + str(bindata.shape))
+        print(bindata)
+        
 
     # State chenge for Analog checkboxes
     def checkBoxStateChangedAnalog(self, int):
@@ -652,6 +658,10 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
             self.plotBinary()
             self.MtnYDataValid = False
             self.RawYDataValid = False
+    
+    def convertStatusWordToBits(self,statwd):
+        print('test')
+
 
     def plotAnalog(self, autozoom=False):
         
@@ -679,9 +689,6 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
                 x_len=len(self.x)
                 y_len=len(y)
 
-                #print('x_len: ' + str(x_len))
-                #print('y_len: ' + str(y_len))
-
                 if self.checkBoxListAnalog[pv].isChecked():
                     if self.plottedLineAnalog[pv] is None:
                          plotpen=pg.mkPen(self.plotColor[pv],width=2)
@@ -696,30 +703,6 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
                     if self.plottedLineAnalog[pv] is not None:
                         self.plotItemAnalog.removeItem(self.plottedLineAnalog[pv])
                         self.plottedLineAnalog[pv] = None
-
-            #else:
-            #    print("Data null for pv: " + pv)
-
-        #if autozoom:
-        #    ymin = np.min(self.data['PosAct-Arr'])
-        #    ymax = np.max(self.data['PosAct-Arr'])
-        #    # ensure different values
-        #    if ymin == ymax:
-        #        ymin=ymin-1
-        #        ymax=ymax+1
-        #    range = ymax - ymin
-        #    ymax += range * 0.1
-        #    ymin -= range * 0.1           
-        #    xmin = minimum_x
-        #    xmax = 0
-        #    if xmin == xmax:
-        #        xmin = xmin - 1
-        #        xmax = xmax + 1
-        #    range = xmax - xmin
-        #    xmax += range * 0.02
-        #    xmin -= range * 0.02
-        #    #self.plotItemAnalog.setYRange(ymin, ymax, padding=0)
-        #    self.plotItemAnalog.setXRange(xmin, xmax, padding=0)
 
         self.allowSave = True
         self.saveBtn.setEnabled(True)
@@ -742,11 +725,8 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
                     print('X is None')
                     continue
 
-                x_len=len(self.x)
-                
+                x_len=len(self.x)                
                 y_len=len(y)
-                #print('x_len: ' +str(x_len))
-                #print('y_len: ' +str(y_len))
 
                 if self.checkBoxListBinary[pv].isChecked():
                     if self.plottedLineBinary[pv] is None:
@@ -765,8 +745,6 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
                     if self.plottedLineBinary[pv] is not None:
                         self.plotItemBinary.removeItem(self.plottedLineBinary[pv])
                         self.plottedLineBinary[pv] = None
-            #else:
-            #    print("Data null for pv: " + pv)
 
         if autozoom:
             ymin = -0.1
