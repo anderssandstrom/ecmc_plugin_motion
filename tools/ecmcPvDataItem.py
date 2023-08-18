@@ -4,20 +4,21 @@ import epics
 import numpy as np
 import time
 import threading
+from PyQt5.QtCore import *
 
 class comSignal(QObject):
     data_signal = pyqtSignal(object)
 
-class dataItem():
-    def __init__(self,pvPrefix , pvSuffix, pluginId, sampleRateHz, maxTimeSeconds):
+class ecmcPvDataItem():
+    def __init__(self,pvPrefix , pvSuffix, pluginId, bufferSize):
         self.pvPrefix = pvPrefix
         self.pvSuffix = pvSuffix
-        self.sampleRateHz = sampleRateHz
         self.pluginId = pluginId
-        self.maxTimeSeconds = maxTimeSeconds
-        self.maxElements = int(self.maxTimeSeconds * self.sampleRateHz)        
-        self.data = {}
-        self.allowDataCollection = False
+        self.bufferSize = int(bufferSize)
+        self.data = np.empty(self.bufferSize)
+        self.allowDataCollection  = False
+        self.extPvMonCallbackFunc = None
+        self.extSigCallbackFunc   = None
 
         self.pvName   = self.pvPrefix + str(self.pluginId) + '-' + self.pvSuffix
         if self.pvName is None:
@@ -36,11 +37,12 @@ class dataItem():
         # Signal callbacks (update gui)
     def sigCallback(self, value):
         if value is not None:
-            if len(value) > 1: # Array
+            if hasattr(value, "__len__"): # Array
                 self.addData(value)
             else: # Scalar                
                 self.data = value
-        
+                self.datalength = 1
+
         # Call custom callback if needed
         if self.extSigCallbackFunc is not None:
             self.extSigCallbackFunc(value)
@@ -57,6 +59,9 @@ class dataItem():
         return self.data
 
     def addData(self, values):
+        #if pvSuffix == 'PosAct-Arr'
+        #   print(values)
+
         if not self.allowDataCollection:
             return
 
@@ -65,14 +70,14 @@ class dataItem():
             self.data = values
             return
         
-        self.data=np.append(self.data,values)
+        self.data = np.append(self.data,values)
         
         # check if delete in beginning is needed
         currcount = len(self.data)
         
         # remove if needed
-        if currcount > self.maxElements:
-            self.data=self.data[currcount-self.maxElements:]
+        if currcount > self.bufferSize:
+            self.data=self.data[currcount-self.bufferSize:]
         
         self.datalength = len(self.data)
     
@@ -85,3 +90,11 @@ class dataItem():
     def regExtPvMonCallback(self, func):
         self.extPvMonCallbackFunc = func
 
+    def pvGet(self):
+        return self.pv.get()
+    
+    def pvPut(self,value):
+        self.pv.put(value)
+        self.data = value
+    
+    

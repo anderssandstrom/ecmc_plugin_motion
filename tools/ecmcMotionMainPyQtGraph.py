@@ -25,6 +25,7 @@ from ecmcOneMotorGUI import *
 
 import pyqtgraph as pg
 import threading
+from ecmcPvDataItem import *
 
 # Allow buffering of 10s data, need to add setting for this
 xMaxTime = 10
@@ -80,103 +81,16 @@ pvNextAxisIndexNamePart2 = '-NxtObjId'
 
 pvmiddlestring='Plg-Mtn'
 
-
-class comSignal(QObject):
-    data_signal = pyqtSignal(object)
-
-class dataItem():
-    def __init__(self,pvPrefix , pvSuffix, pluginId, sampleRateHz, maxTimeSeconds):
-        self.pvPrefix            = pvPrefix
-        self.pvSuffix            = pvSuffix
-        self.sampleRateHz        = sampleRateHz
-        self.pluginId            = pluginId
-        self.maxTimeSeconds      = maxTimeSeconds
-        self.maxElements         = int(self.maxTimeSeconds * self.sampleRateHz)        
-        self.data                = {}
-        self.allowDataCollection = False
-
-        self.pvName   = self.pvPrefix + str(self.pluginId) + '-' + self.pvSuffix
-        if self.pvName is None:
-            raise RuntimeError("pvname must not be 'None'")
-        if len(self.pvName) == 0:
-            raise RuntimeError("pvname must not be ''")
-        
-        # Signals
-        self.pvSignalCallback = comSignal()        
-        self.pvSignalCallback.data_signal.connect(self.sigCallback)
-        
-        # pv monitor callback
-        self.pv = epics.PV(self.pvName)
-        self.pv.add_callback(self.pvMonCallback)
-
-        # Signal callbacks (update gui)
-    def sigCallback(self, value):
-        if value is not None:
-            if len(value) > 1: # Array
-                self.addData(value)
-            else: # Scalar                
-                self.data = value
-        
-        # Call custom callback if needed
-        if self.extSigCallbackFunc is not None:
-            self.extSigCallbackFunc(value)
-
-    # Pv monitor callbacks
-    def pvMonCallback(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pvSignalCallback.data_signal.emit(value)
-
-        # Call custom callback if needed
-        if self.extPvMonCallbackFunc is not None:
-            self.extPvMonCallbackFunc(pvname, value, char_value,timestamp, **kw)
-
-    def getData(self):
-        return self.data
-
-    def addData(self, values):
-        if not self.allowDataCollection:
-            return
-
-        # Check if first assignment
-        if self.data is None:            
-            self.data = values
-            return
-        
-        self.data=np.append(self.data,values)
-        
-        # check if delete in beginning is needed
-        currcount = len(self.data)
-        
-        # remove if needed
-        if currcount > self.maxElements:
-            self.data=self.data[currcount-self.maxElements:]
-        
-        self.datalength = len(self.data)
-    
-    def setAllowDataCollection(self,allow):
-        self.allowDataCollection = allow
-
-    def regExtSigCallback(self, func):
-        self.extSigCallbackFunc = func
-    
-    def regExtPvMonCallback(self, func):
-        self.extPvMonCallbackFunc = func
-
 class ecmcMtnMainGui(QtWidgets.QDialog):
     def __init__(self,prefix="IOC_TEST:",mtnPluginId=0):
-        super(ecmcMtnMainGui, self).__init__()
+        super(ecmcMtnMainGui, self).__init__()        
+        self.pvItems           = {}
 
-        self.pvnames = {}
-        self.pvs = {}
-        self.pv_signal_cbs = {}
-        self.data = {}
-        self.datalength = {}
         self.plottedLineAnalog = {}
         self.plottedLineBinary = {}
 
-        self.testPV = dataItem(prefix + pvmiddlestring,'PosAct-Arr',mtnPluginId,1000,10)
-        self.testPV.regExtSigCallback(self.testSigCallback)
-        self.testPV.regExtPvMonCallback(self.testPVMonCallback)
-        self.testPV.setAllowDataCollection(True)
+        for pv in pvlist:
+            self.pvItems[pv] = None
 
         for pv in pvAnalog:
             self.plottedLineAnalog[pv] = None
@@ -184,44 +98,41 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         for pv in pvBinary:
             self.plottedLineBinary[pv] = None
 
-        for pv in pvlist:
-            self.data[pv] = None
-            self.datalength[pv] = 0
-
         #Set some default plot colours
-        self.plotColor={}
+        self.plotColor = {}
+
         # Analog
-        self.plotColor['PosAct-Arr']='g'
-        self.plotColor['PosSet-Arr']='b'
-        self.plotColor['PosErr-Arr']='r'
-        self.plotColor['ErrId-Arr']='k'
-        self.plotColor['Stat-Arr']='m'
+        self.plotColor['PosAct-Arr'] = 'g'
+        self.plotColor['PosSet-Arr'] = 'b'
+        self.plotColor['PosErr-Arr'] = 'r'
+        self.plotColor['ErrId-Arr']  = 'k'
+        self.plotColor['Stat-Arr']   = 'm'
         
         self.checkboxColor={}
-        self.checkboxColor['PosAct-Arr']='green'
-        self.checkboxColor['PosSet-Arr']='blue'
-        self.checkboxColor['PosErr-Arr']='red'
-        self.checkboxColor['ErrId-Arr']='black'
-        self.checkboxColor['Stat-Arr']='magenta'
+        self.checkboxColor['PosAct-Arr'] ='green'
+        self.checkboxColor['PosSet-Arr'] ='blue'
+        self.checkboxColor['PosErr-Arr'] ='red'
+        self.checkboxColor['ErrId-Arr']  ='black'
+        self.checkboxColor['Stat-Arr']   ='magenta'
 
         # Binary
-        self.plotColor['Ena-Arr']='b'
-        self.plotColor['EnaAct-Arr']='c'
-        self.plotColor['Bsy-Arr']='r'
-        self.plotColor['Exe-Arr']='m'
-        self.plotColor['TrjSrc-Arr']='y'
-        self.plotColor['EncSrc-Arr']='k'
-        self.plotColor['AtTrg-Arr']='g'
+        self.plotColor['Ena-Arr']    = 'b'
+        self.plotColor['EnaAct-Arr'] = 'c'
+        self.plotColor['Bsy-Arr']    = 'r'
+        self.plotColor['Exe-Arr']    = 'm'
+        self.plotColor['TrjSrc-Arr'] = 'y'
+        self.plotColor['EncSrc-Arr'] = 'k'
+        self.plotColor['AtTrg-Arr']  = 'g'
 
-        self.checkboxColor['Ena-Arr']='blue'
-        self.checkboxColor['EnaAct-Arr']='cyan'
-        self.checkboxColor['Bsy-Arr']='red'
-        self.checkboxColor['Exe-Arr']='magenta'
-        self.checkboxColor['TrjSrc-Arr']='yellow'
-        self.checkboxColor['EncSrc-Arr']='black'
-        self.checkboxColor['AtTrg-Arr']='green'
+        self.checkboxColor['Ena-Arr']    = 'blue'
+        self.checkboxColor['EnaAct-Arr'] = 'cyan'
+        self.checkboxColor['Bsy-Arr']    = 'red'
+        self.checkboxColor['Exe-Arr']    = 'magenta'
+        self.checkboxColor['TrjSrc-Arr'] = 'yellow'
+        self.checkboxColor['EncSrc-Arr'] = 'black'
+        self.checkboxColor['AtTrg-Arr']  = 'green'
 
-        self.offline = False
+        self.offline = True
         self.pvPrefixStr = prefix
         self.pvPrefixOrigStr = prefix  # save for restore after open datafile
         self.mtnPluginId = mtnPluginId
@@ -233,7 +144,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.labelBinaryY = "Binary"
         self.labelAnalogY = "Analog"
         self.title = ""
-        #self.NMtn = 1024
+
         self.sampleRate = 1000
         self.sampleRateValid = False
         self.MtnYDataValid = False
@@ -242,35 +153,69 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         if prefix is None or mtnPluginId is None:
           self.offline = True
           self.pause = True
-          self.data['EnaCmd-RB'] = False           
-        else:
-          #Check for connection else go offline
-          self.buildPvNames()          
-          connected = self.pvs['BuffSze'].wait_for_connection(timeout=2)
-          if connected:
+
+        self.startupDone=False 
+        self.pause = 0
+
+        self.createWidgets()
+        self.resize(1000,850)
+
+        self.connectToEcmc()
+        self.initPVs(self.sampleRate*xMaxTime)
+
+        # read sample rate to bea able to deduce buffer size
+        self.setStatusOfWidgets()
+        return
+   
+    def connectToEcmc(self):
+
+        # Check connection and read sample rate
+        pvSampleRate = epics.PV(self.pvPrefixStr + pvmiddlestring + str(int(self.mtnPluginId))+ '-SmpHz-RB')
+        connected = pvSampleRate.wait_for_connection(timeout = 2)                  
+        if connected:
+            print('Connected to ecmc')
             self.offline = False
             self.pause = False
-          else: 
+            self.sampleRate = pvSampleRate.get()
+            if self.sampleRate is None:              
+                print("Read sample rate failed. fallback to 1000Hz")
+                self.sampleRate = 1000
+        else: 
+            print('Not Connected')
             self.offline = True
-            self.pause = True
-            self.data['EnaCmd-RB'] = False          
+            self.pause = True            
 
-        self.startupDone=False        
-        self.pause = 0
-        self.createWidgets()
-        self.setStatusOfWidgets()
-        self.resize(1000,850)
-        return
+        self.sampleRateValid = True
 
-    
-    def testPVMonCallback(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        print('PV callback:')
-        print(pvname)
-        print(value)
+        # calc x Array
+        step=1/self.sampleRate           
+        self.x = np.arange(-xMaxTime-step,0+step,step)
 
-    def testSigCallback(self,value):        
-        print('SIG callback:')        
-        print(value)
+        # Read available axes
+        self.readAxisList()
+        
+        
+    def initPVs(self,bufferSize):
+        for pvname in pvlist:
+            if pvname in pvAnalog:
+                self.pvItems[pvname] = ecmcPvDataItem(prefix + pvmiddlestring,pvname,self.mtnPluginId,bufferSize)
+            elif pvname in pvBinary:
+                self.pvItems[pvname] = ecmcPvDataItem(prefix + pvmiddlestring,pvname,self.mtnPluginId,bufferSize)
+            else:
+                self.pvItems[pvname] = ecmcPvDataItem(prefix + pvmiddlestring,pvname,self.mtnPluginId,1)
+        
+            self.pvItems[pvname].setAllowDataCollection(True)
+
+        # register special callbacks
+        self.pvItems['PosAct-Arr'].regExtSigCallback(self.sig_cb_PosAct_Arr)
+        self.pvItems['Time-Arr'].regExtSigCallback(self.sig_cb_Time_Arr)
+        self.pvItems['Mde-RB'].regExtSigCallback(self.sig_cb_Mde_RB)
+        self.pvItems['AxCmd-RB'].regExtSigCallback(self.sig_cb_AxCmd_RB)
+        self.pvItems['EnaCmd-RB'].regExtSigCallback(self.sig_cb_EnaCmd_RB)
+        # Example calls to ecmcPvDataItem:
+        #self.testPV.regExtSigCallback(self.testSigCallback)
+        #self.testPV.regExtPvMonCallback(self.testPVMonCallback)
+        #self.testPV.setAllowDataCollection(True)
 
     def createWidgets(self):
         self.graphicsLayoutWidget = pg.GraphicsLayoutWidget()
@@ -314,10 +259,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         # Fix layout
         self.setGeometry(300, 300, 1200, 900)
 
-        
         frameMainLeft = QFrame(self)
-        #frameHorMainLeft.setLayout(layoutHorMain)
-
         layoutVertMain = QVBoxLayout()
 
         # Bottom button section
@@ -429,225 +371,48 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
             self.triggBtn.setEnabled(False)
             self.setWindowTitle("ecmc Mtn Main plot: Offline")            
         else:
-           self.modeCombo.setEnabled(True)
-           # Check actual value of pvs
-           enable = self.pvs['EnaCmd-RB'].get()
-           if enable is None:
-             print("pvs['EnaCmd-RB'].get() failed")
-             return
-           if(enable>0):
-             self.enableBtn.setStyleSheet("background-color: green")
-             self.data['EnaCmd-RB'] = True
-           else:
-             self.enableBtn.setStyleSheet("background-color: red")
-             self.data['EnaCmd-RB'] = False
+            self.modeCombo.setEnabled(True)
+            # Check actual value of pvs
+            enable = self.pvItems['EnaCmd-RB'].pvGet()
+            if enable is None:
+                print("pvs['EnaCmd-RB'].get() failed")
+                return
+            if(enable>0):
+                self.enableBtn.setStyleSheet("background-color: green")                
+            else:
+                self.enableBtn.setStyleSheet("background-color: red")                
+          
+            # Mode
+            self.mode = self.pvItems['Mde-RB'].pvGet()    
+            if self.mode is None:
+                print("pvs['Mde-RB'].get() failed")
+            self.modeStr = "NO_MODE"
 
-           self.sampleRate = self.pvs['SmpHz-RB'].get()
-           if self.sampleRate is None:              
-              print("pvs['SmpHz-RB'].get() failed")
-              return
-           self.sampleRateValid = True
-           
-           # calc x Array
-           step=1/self.sampleRate
-           
-           self.x = np.arange(-xMaxTime-step,0+step,step)
-           print('x')
-           print(self.x)
-
-           self.data['Mde-RB'] = self.pvs['Mde-RB'].get()    
-           if self.data['Mde-RB'] is None:
-             print("pvs['Mde-RB'].get() failed")
-             return
-           
-           # Mode
-           self.modeStr = "NO_MODE"
-           self.triggBtn.setEnabled(False) # Only enable if mode = TRIGG = 2
-           if self.data['Mde-RB'] == 1:
-               self.modeStr = "CONT"
-               self.modeCombo.setCurrentIndex(self.data['Mde-RB']-1) # Index start at zero
-   
-           if self.data['Mde-RB'] == 2:
-               self.modeStr = "TRIGG"
-               self.triggBtn.setEnabled(True)
-               self.modeCombo.setCurrentIndex(self.data['Mde-RB']-1) # Index start at zero
-           
-           #if self.data['AxCmd-RB'] is not None:
-           #   self.cmbBxSelectAxis.setValue(int(self.data['AxCmd-RB']))
-           #else:
-           #   self.cmbBxSelectAxis.setValue(1)
-
-           self.setWindowTitle("ecmc Mtn Main plot: prefix=" + self.pvPrefixStr + " , mtnId=" + str(self.mtnPluginId) + 
-                               ", rate=" + str(self.sampleRate))
-           self.readAxisList()
-
-
-    def addData(self, pvName, values):
-        # Check if first assignment
-        if self.data[pvName] is None:            
-            self.data[pvName] = values
-            return
-        
-        self.data[pvName]=np.append(self.data[pvName],values)
-        
-        # check if delete in beginning is needed
-        currcount = len(self.data[pvName])
-        if self.sampleRateValid:          
-          allowedcount = int(xMaxTime * self.sampleRate)
-        else:
-          print('Warning sample rate not defined, fallback to max 10000 values')
-          allowedcount = 10000
-        
-        # remove if needed
-        if currcount > allowedcount:
-            self.data[pvName]=self.data[pvName][currcount-allowedcount:]
-        
-        self.datalength[pvName] = len(self.data[pvName])
-
-
-    def buildPvNames(self):        
-        # Pv names based on structure:  <prefix>Plugin-Mtn<mtnPluginId>-<suffixname>
-        for pv in pvlist:
-            self.pvnames[pv]=self.buildPvName(pv)
-            if self.pvnames[pv] is None:
-                raise RuntimeError("pvname must not be 'None'")
-            if len(self.pvnames[pv])==0:
-                raise RuntimeError("pvname must not be ''")
-            self.pvs[pv] = epics.PV(self.pvnames[pv])
-            self.pv_signal_cbs[pv] = comSignal()
+            self.triggBtn.setEnabled(False) # Only enable if mode = TRIGG = 2
+            if self.mode == 1:
+                self.modeStr = "CONT"
+                self.modeCombo.setCurrentIndex(self.pvItems['Mde-RB'].getData()-1) # Index start at zero
+    
+            if self.mode == 2:
+                self.modeStr = "TRIGG"
+                self.triggBtn.setEnabled(True)
+                self.modeCombo.setCurrentIndex(self.pvItems['Mde-RB'].getData()-1) # Index start at zero
             
-            # Signal callbacks (update gui)
-            # replace any '-' with '_' since '-' not allowed in funcion names
-            sig_cb_func=getattr(self,'sig_cb_' + pv.replace('-','_'))
-            self.pv_signal_cbs[pv].data_signal.connect(sig_cb_func)
 
-            # Pv monitor callbacks
-            mon_cb_func=getattr(self,'on_change_' + pv.replace('-','_'))
-            self.pvs[pv].add_callback(mon_cb_func)                        
+            self.setWindowTitle("ecmc Mtn Main plot: prefix=" + self.pvPrefixStr + " , mtnId=" + str(self.mtnPluginId) + 
+                                ", rate=" + str(self.sampleRate))            
 
         QCoreApplication.processEvents()
 
-    def buildPvName(self, suffixname):
-        return self.pvPrefixStr + pvmiddlestring + str(self.mtnPluginId) + '-' + suffixname 
-        
-    ###### Pv monitor callbacks
-    def on_change_BuffSze(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['BuffSze'].data_signal.emit(value)
-
-    def on_change_ElmCnt(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['ElmCnt'].data_signal.emit(value)
-
-    def on_change_PosAct_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['PosAct-Arr'].data_signal.emit(value)
-
-    def on_change_PosSet_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):        
-        self.pv_signal_cbs['PosSet-Arr'].data_signal.emit(value)
-
-    def on_change_PosErr_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['PosErr-Arr'].data_signal.emit(value)
-
-    def on_change_Time_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['Time-Arr'].data_signal.emit(value)
-
-    def on_change_Ena_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['Ena-Arr'].data_signal.emit(value)
-
-    def on_change_EnaAct_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['EnaAct-Arr'].data_signal.emit(value)
-
-    def on_change_Bsy_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['Bsy-Arr'].data_signal.emit(value)
-
-    def on_change_Exe_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['Exe-Arr'].data_signal.emit(value)
-
-    def on_change_TrjSrc_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['TrjSrc-Arr'].data_signal.emit(value)
-
-    def on_change_EncSrc_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['EncSrc-Arr'].data_signal.emit(value)
-
-    def on_change_AtTrg_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['AtTrg-Arr'].data_signal.emit(value)
-
-    def on_change_ErrId_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['ErrId-Arr'].data_signal.emit(value)
-
-    def on_change_Stat_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['Stat-Arr'].data_signal.emit(value)
-
-    def on_change_Mde_RB(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['Mde-RB'].data_signal.emit(value)
-
-    def on_change_Cmd_RB(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['Cmd-RB'].data_signal.emit(value)
-
-    def on_change_Stat(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['Stat'].data_signal.emit(value)
-
-    def on_change_AxCmd_RB(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['AxCmd-RB'].data_signal.emit(value)
-
-    def on_change_SmpHz_RB(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['SmpHz-RB'].data_signal.emit(value)
-
-    def on_change_TrgCmd_RB(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['TrgCmd-RB'].data_signal.emit(value)
-
-    def on_change_EnaCmd_RB(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
-        self.pv_signal_cbs['EnaCmd-RB'].data_signal.emit(value)
-
-    ###### Signal callbacks
-    def sig_cb_BuffSze(self,value):        
-        self.data['BuffSze'] = value
-
-    def sig_cb_ElmCnt(self,value):
-        self.data['ElmCnt'] = value
-
     def sig_cb_PosAct_Arr(self,value):
         if(np.size(value)) > 0:
-            self.MtnYDataValid = True
-            self.addData('PosAct-Arr', value)
-
-    def sig_cb_PosSet_Arr(self,value):
-        self.addData('PosSet-Arr', value)
-
-    def sig_cb_PosErr_Arr(self,value):
-        self.addData('PosErr-Arr', value)
+            self.MtnYDataValid = True            
 
     def sig_cb_Time_Arr(self,value):
         if(np.size(value)) > 0:
-            self.addData('Time-Arr', value)
             self.MtnXDataValid = True
         self.plotAll()
         return
-
-    def sig_cb_Ena_Arr(self,value):
-        self.addData('Ena-Arr', value)
-
-    def sig_cb_EnaAct_Arr(self,value):
-        self.addData('EnaAct-Arr', value)
-
-    def sig_cb_Bsy_Arr(self,value):
-        self.addData('Bsy-Arr', value)
-
-    def sig_cb_Exe_Arr(self,value):
-        self.addData('Exe-Arr', value)
-
-    def sig_cb_TrjSrc_Arr(self,value):
-        self.addData('TrjSrc-Arr', value)
-
-    def sig_cb_EncSrc_Arr(self,value):
-        self.addData('EncSrc-Arr', value)
-
-    def sig_cb_AtTrg_Arr(self,value):
-        self.addData('AtTrg-Arr', value)
-
-    def sig_cb_ErrId_Arr(self,value):
-        self.addData('ErrId-Arr', value)
-
-    def sig_cb_Stat_Arr(self,value):
-        self.addData('Stat-Arr', value)
 
     def sig_cb_Mde_RB(self,value):        
         if value < 1 or value> 2:
@@ -655,29 +420,22 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
             print('callbackFuncMode: Error Invalid mode.')
             return
 
-        self.data['Mde-RB'] = value
-        self.modeCombo.setCurrentIndex(self.data['Mde-RB']-1) # Index starta t zero
+        self.modeCombo.setCurrentIndex(value-1) # Index starta t zero
         
-        if self.data['Mde-RB'] == 1:
+        if value == 1:
             self.modeStr = "CONT"
             self.triggBtn.setEnabled(False) # Only enable if mode = TRIGG = 2
                         
-        if self.data['Mde-RB'] == 2:
+        if value == 2:
            self.modeStr = "TRIGG"
            self.triggBtn.setEnabled(True)        
         return
-
-    def sig_cb_Cmd_RB(self,value):
-        self.data['Cmd-RB'] = value
-
-    def sig_cb_Stat(self,value):
-        self.data['Stat'] = value
 
     def sig_cb_AxCmd_RB(self,value):
         if value is None:
             return
         print('Axis Id Value: ' + str(value))
-        self.data['AxCmd-RB'] = value                
+        
         
         id = self.cmbBxSelectAxis.findText(str(int(value)))
         if id >= 0:
@@ -687,31 +445,20 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         prefixPV = epics.PV(axisPrefixPvName)
         axisPrefix = prefixPV.get()
         if axisPrefix is not None:
-            #print('prefix of axis:' + axisPrefix)
             self.axisPrefix = axisPrefix
 
         axisNamePvName = self.pvPrefixStr + pvAxisNamePart1 + str(int(value)) + pvAxisNamePart2
         namePV = epics.PV(axisNamePvName)
         axisName = namePV.get()
         if axisName is not None:
-            #print('name of axis:' + axisName)
             self.axisName = axisName
 
-    def sig_cb_SmpHz_RB(self,value):
-        self.data['SmpHz-RB'] = value
-
-    def sig_cb_TrgCmd_RB(self,value):
-        self.data['TrgCmd-RB'] = value
-
     def sig_cb_EnaCmd_RB(self,value):
-        self.data['EnaCmd-RB'] = value
-
-        self.data['EnaCmd-RB'] = value    
-        if self.data['EnaCmd-RB']:
+        self.pvItems['EnaCmd-RB'].pvPut(value)
+        if value:
           self.enableBtn.setStyleSheet("background-color: green")
         else:
-          self.enableBtn.setStyleSheet("background-color: red")
-        self.data['EnaCmd-RB'] = value
+          self.enableBtn.setStyleSheet("background-color: red")        
         return
 
     # State chenge for Analog checkboxes
@@ -747,7 +494,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
     def changeAxisIndex(self,xxx):
         if self.cmbBxSelectAxis.currentData() is not None:
-            self.pvs['AxCmd-RB'].put(self.cmbBxSelectAxis.currentData(), use_complete=True)
+            self.pvItems['AxCmd-RB'].pvPut(self.cmbBxSelectAxis.currentData(), use_complete=True)
 
     def openMotorRecordPanel(self,xxx):
         self.dialog = MotorPanel(self,self.axisPrefix ,self.axisName)
@@ -761,30 +508,31 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
             self.pauseBtn.setStyleSheet("background-color: red")
         else:
             self.pvPrefixStr = self.pvPrefixOrigStr  # Restore if dataset  was opened
-            self.mtnPluginId = self.mtnPluginOrigId  # Restore if dataset  was opened
-            self.buildPvNames()
+            self.mtnPluginId = self.mtnPluginOrigId  # Restore if dataset  was opened            
             self.pauseBtn.setStyleSheet("background-color: green")
 
         return
 
     def enableBtnAction(self):
-        self.data['EnaCmd-RB'] = not self.data['EnaCmd-RB']
-        self.pvs['EnaCmd-RB'].put(self.data['EnaCmd-RB'])
-        if self.data['EnaCmd-RB']:
+        
+        currValue = self.pvItems['EnaCmd-RB'].getData()
+
+        self.pvItems['EnaCmd-RB'].pvPut(not currValue)
+        if self.pvItems['EnaCmd-RB'].getData():
           self.enableBtn.setStyleSheet("background-color: green")
         else:
           self.enableBtn.setStyleSheet("background-color: red")
         return
 
     def triggBtnAction(self):
-        self.pvTrigg.put(True)
+        self.pvItems['TrgCmd-RB'].pvPut(True)        
         return
 
-    def zoomBtnAction(self):        
-        if self.data['Time-Arr'] is None:
+    def zoomBtnAction(self):
+        if self.pvItems['Time-Arr'].getData() is None:
             return
 
-        if self.data['PosAct-Arr'] is None:
+        if self.pvItems['PosAct-Arr'].getData() is None:
             return
         
         self.plotAnalog(True)
@@ -792,9 +540,15 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         return
 
     def newModeIndexChanged(self,index):
+        if self.pvItems is None:
+           return
+        
+        if self.pvItems['Mde-RB'] is None:
+           return
+        
         if index==0 or index==1:
-            if not self.offline and self.pvs['Mde-RB'] is not None:
-               self.pvs['Mde-RB'].put(index+1)
+            if not self.offline and self.pvItems['Mde-RB'] is not None:
+               self.pvItems['Mde-RB'].pvPut(index+1)
         return
     
     def openBtnAction(self):
@@ -900,23 +654,34 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
             self.RawYDataValid = False
 
     def plotAnalog(self, autozoom=False):
-        if self.data['Time-Arr'] is None:
+        
+        if self.pvItems['Time-Arr'].getData() is None:
             print('Error: No data')
             return
 
-        if self.data['PosAct-Arr'] is None:
+        if self.pvItems['PosAct-Arr'].getData() is None:
             print('Error: No data')
             return
        
-        minimum_x = 0
-
         # plot data 
+        minimum_x = 0
         for pv in pvAnalog:
-            
-            if self.data[pv] is not None:
+            if self.pvItems[pv] is not None:
+   
+                y = self.pvItems[pv].getData()                
+                if y is None:
+                    print('Y is None')
+                    continue
+                if self.x is None:
+                    print('X is None')
+                    continue
+
                 x_len=len(self.x)
-                y = self.data[pv]
                 y_len=len(y)
+
+                #print('x_len: ' + str(x_len))
+                #print('y_len: ' + str(y_len))
+
                 if self.checkBoxListAnalog[pv].isChecked():
                     if self.plottedLineAnalog[pv] is None:
                          plotpen=pg.mkPen(self.plotColor[pv],width=2)
@@ -935,43 +700,54 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
             #else:
             #    print("Data null for pv: " + pv)
 
-        if autozoom:
-            ymin = np.min(self.data['PosAct-Arr'])
-            ymax = np.max(self.data['PosAct-Arr'])
-            # ensure different values
-            if ymin == ymax:
-                ymin=ymin-1
-                ymax=ymax+1
-            range = ymax - ymin
-            ymax += range * 0.1
-            ymin -= range * 0.1           
-            xmin = minimum_x
-            xmax = 0
-            if xmin == xmax:
-                xmin = xmin - 1
-                xmax = xmax + 1
-            range = xmax - xmin
-            xmax += range * 0.02
-            xmin -= range * 0.02
-            #self.plotItemAnalog.setYRange(ymin, ymax, padding=0)
-            self.plotItemAnalog.setXRange(xmin, xmax, padding=0)
+        #if autozoom:
+        #    ymin = np.min(self.data['PosAct-Arr'])
+        #    ymax = np.max(self.data['PosAct-Arr'])
+        #    # ensure different values
+        #    if ymin == ymax:
+        #        ymin=ymin-1
+        #        ymax=ymax+1
+        #    range = ymax - ymin
+        #    ymax += range * 0.1
+        #    ymin -= range * 0.1           
+        #    xmin = minimum_x
+        #    xmax = 0
+        #    if xmin == xmax:
+        #        xmin = xmin - 1
+        #        xmax = xmax + 1
+        #    range = xmax - xmin
+        #    xmax += range * 0.02
+        #    xmin -= range * 0.02
+        #    #self.plotItemAnalog.setYRange(ymin, ymax, padding=0)
+        #    self.plotItemAnalog.setXRange(xmin, xmax, padding=0)
 
-    
         self.allowSave = True
         self.saveBtn.setEnabled(True)
 
     def plotBinary(self, autozoom=False):
 
-        if self.data['Time-Arr'] is None:
+        if self.pvItems['Time-Arr'].getData() is None:
+            print('Error: No data')
             return
-       
+      
         # plot data
         minimum_x = 0
         for pv in pvBinary:
-            if self.data[pv] is not None:
+            if self.pvItems[pv] is not None:
+                y = self.pvItems[pv].getData()
+                if y is None:
+                    print('Y is None')
+                    continue
+                if self.x is None:
+                    print('X is None')
+                    continue
+
                 x_len=len(self.x)
-                y = self.data[pv]
+                
                 y_len=len(y)
+                #print('x_len: ' +str(x_len))
+                #print('y_len: ' +str(y_len))
+
                 if self.checkBoxListBinary[pv].isChecked():
                     if self.plottedLineBinary[pv] is None:
                         plotpen=pg.mkPen(self.plotColor[pv],width=2)
