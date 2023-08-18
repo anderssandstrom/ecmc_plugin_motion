@@ -52,14 +52,13 @@ class ecmcParseAxisStatusWord():
 
     def convert(self,statusWdArray):
         arraylength = len(statusWdArray)
-        data=np.empty([22,arraylength])
+        data = np.empty([22,arraylength])
         i = 0
         for statwd in statusWdArray:
-            data[:20:,i] = self.binaryRepr20(statwd)            
+            data[:20:,i] = self.binaryRepr20(statwd)[::-1]  # need reverse
             data[20,i]    = self.getSeqState(statwd)
-            data[21,i]    = self.getIlockData(statwd)            
-            i += 1
-            #print('Enable' +str(data[0,1]))
+            data[21,i]    = self.getIlockData(statwd)
+            i += 1            
         return data
 
     def getSeqState(self,data):

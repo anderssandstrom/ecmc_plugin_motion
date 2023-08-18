@@ -34,13 +34,13 @@ pvlist = [ 'BuffSze',
            'PosSet-Arr',
            'PosErr-Arr',
            'Time-Arr',
-           'Ena-Arr',
-           'EnaAct-Arr',
-           'Bsy-Arr',
-           'Exe-Arr',
-           'TrjSrc-Arr',
-           'EncSrc-Arr',
-           'AtTrg-Arr',
+#           'Ena-Arr',
+#           'EnaAct-Arr',
+#           'Bsy-Arr',
+#           'Exe-Arr',
+#           'TrjSrc-Arr',
+#           'EncSrc-Arr',
+#           'AtTrg-Arr',
            'ErrId-Arr',
            'Stat-Arr',
            'Mde-RB',
@@ -57,13 +57,20 @@ pvAnalog = ['PosAct-Arr',
             'ErrId-Arr',
             'Stat-Arr']
 
-pvBinary = ['Ena-Arr',
-            'EnaAct-Arr',
-            'Bsy-Arr',
-            'Exe-Arr',
-            'TrjSrc-Arr',
-            'EncSrc-Arr',
-            'AtTrg-Arr']
+pvAnaPLotsDefaultEnabled = ['PosAct-Arr',
+                            'PosSet-Arr',
+                            'PosErr-Arr']
+
+pvBinPLotsDefaultEnabled = ['enable',
+                            'enabled',
+                            'busy',
+                            'attarget',
+                            'moving']
+pvBinBlock = ['instartup',
+              'inrealtime',
+              'axisType',
+              'seqstate',
+              'lastilock']
 
 # MCU info PVs
 pvAxisPrefixNamePart1 ='MCU-Cfg-AX'
@@ -80,12 +87,14 @@ pvmiddlestring='Plg-Mtn'
 
 class ecmcMtnMainGui(QtWidgets.QDialog):
     def __init__(self,prefix="IOC_TEST:",mtnPluginId=0):
-        super(ecmcMtnMainGui, self).__init__()        
+        super(ecmcMtnMainGui, self).__init__()
         self.pvItems           = {}
         self.parseAxisStatWd    = ecmcParseAxisStatusWord()  
-        self.axisStatWdNames = self.parseAxisStatWd.getNames()
+        self.axisStatWdNames = self.parseAxisStatWd.getNames()    
         self.plottedLineAnalog = {}
         self.plottedLineBinary = {}
+        self.pvAnalogDefaultCbState = {}
+        self.pvBinaryDefaultCbState = {}
         self.dataStatWd = None
         self.bufferSize = 0
         for pv in pvlist:
@@ -93,9 +102,17 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
         for pv in pvAnalog:
             self.plottedLineAnalog[pv] = None
+            self.pvAnalogDefaultCbState[pv] = False
         
         for pv in self.axisStatWdNames:
-            self.plottedLineBinary[pv] = None        
+            self.plottedLineBinary[pv] = None
+            self.pvBinaryDefaultCbState[pv] = False
+        
+        for pv in pvBinPLotsDefaultEnabled:
+            self.pvBinaryDefaultCbState[pv] = True
+
+        for pv in pvAnaPLotsDefaultEnabled:
+            self.pvAnalogDefaultCbState[pv] = True
 
         #Set some default plot colours
         self.plotColor = {}
@@ -199,8 +216,6 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         for pvname in pvlist:
             if pvname in pvAnalog:
                 self.pvItems[pvname] = ecmcPvDataItem(prefix + pvmiddlestring,pvname,self.mtnPluginId,bufferSize)
-            elif pvname in pvBinary:
-                self.pvItems[pvname] = ecmcPvDataItem(prefix + pvmiddlestring,pvname,self.mtnPluginId,bufferSize)
             else:
                 self.pvItems[pvname] = ecmcPvDataItem(prefix + pvmiddlestring,pvname,self.mtnPluginId,1)
         
@@ -301,7 +316,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.checkBoxListAnalog={}
         for pv in pvAnalog:
             self.checkBoxListAnalog[pv] = QCheckBox(pv)
-            self.checkBoxListAnalog[pv].setChecked(True)
+            self.checkBoxListAnalog[pv].setChecked(self.pvAnalogDefaultCbState[pv])
             self.checkBoxListAnalog[pv].setStyleSheet("color: " + self.checkboxColor[pv])
             layoutVertPlotsSelectionUpper.addWidget(self.checkBoxListAnalog[pv])
             self.checkBoxListAnalog[pv].toggled.connect(self.checkBoxStateChangedAnalog)
@@ -318,12 +333,21 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         layoutVertPlotsSelectionLower.addWidget(binSelectLabel)
         self.checkBoxListBinary={}
         
+        i = 0
         for pv in self.axisStatWdNames:
+            if pv in pvBinBlock:
+                i += 1
+                continue
+
             self.checkBoxListBinary[pv] = QCheckBox(pv)
-            self.checkBoxListBinary[pv].setChecked(True)
-            #self.checkBoxListBinary[pv].setStyleSheet("color: " + self.checkboxColor[pv])
+            self.checkBoxListBinary[pv].setChecked(self.pvBinaryDefaultCbState[pv])
+            color = pg.intColor(i)
+            p = QPalette(color)
+            p.setBrush(QPalette.WindowText,color)
+            self.checkBoxListBinary[pv].setPalette(p)
             layoutVertPlotsSelectionLower.addWidget(self.checkBoxListBinary[pv])
             self.checkBoxListBinary[pv].toggled.connect(self.checkBoxStateChangedBinary)
+            i += 1
 
         framePlotsSelectionLower.setLayout(layoutVertPlotsSelectionLower)
 
@@ -466,9 +490,6 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
     def sig_cb_Stat_Arr(self,value):
 
         data = self.parseAxisStatWd.convert(value)
-        #bindata=self.pvItems['Stat-Arr'].binaryRepr(value)
-        #print('Binary data: ' + str(bindata.shape))
-        #print(bindata)
         self.addStatWdData(data)
 
     def addStatWdData(self, values):
@@ -508,12 +529,10 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
         self.cmbBxSelectAxis.clear()        
         self.cmbBxSelectAxis.addItem(str(int(axId)))
-        #print('First Axis Index:' + str(axId))
         
         while axId >= 0:
            # Get next axis id
            pvName = self.pvPrefixStr + pvNextAxisIndexNamePart1 + str(int(axId)) + pvNextAxisIndexNamePart2
-           #print('axislist pvname: ' + pvName)
            axIdPV = epics.PV(pvName)
            axId = axIdPV.get()
            
@@ -746,6 +765,10 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         i = 0
 
         for pv in self.axisStatWdNames:
+            if pv in pvBinBlock:
+                i += 1
+                continue
+
             if self.checkBoxListBinary[pv].isChecked():
                 y = self.dataStatWd[i,:]
                 if y is None:
@@ -753,14 +776,9 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
                     return
                 
                 y_len=len(y)
-                print('y_len')
-                print(y_len)
-                print('x_len')
-                print(x_len)
 
                 if self.plottedLineBinary[pv] is None:
-                    #plotpen=pg.mkPen(self.plotColor[pv],width=2)
-                    self.plottedLineBinary[pv] = self.plotItemBinary.plot(self.x[x_len-y_len:],self.dataStatWd[i,:],pen=[0,22])
+                    self.plottedLineBinary[pv] = self.plotItemBinary.plot(self.x[x_len-y_len:],self.dataStatWd[i,:],pen=pg.mkPen(i, width=2))
                     self.plotItemBinary.showGrid(x=True,y=True)
                     self.plotItemBinary.setXLink(self.plotItemAnalog)
                     self.plotItemBinary.setYRange(-0.1, 1.1, padding=0)        
@@ -777,43 +795,6 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         
         return
 
-        #if self.pvItems['Time-Arr'].getData() is None:
-        #    print('Error: No data')
-        #    return
-      #
-        ## plot data
-        #minimum_x = 0
-        #for pv in pvBinary:
-        #    if self.pvItems[pv] is not None:
-        #        y = self.pvItems[pv].getData()
-        #        if y is None:
-        #            print('Y is None')
-        #            continue
-        #        if self.x is None:
-        #            print('X is None')
-        #            continue
-#
-        #        x_len=len(self.x)                
-        #        y_len=len(y)
-#
-        #        if self.checkBoxListBinary[pv].isChecked():
-        #            if self.parseAxisStatWdNamesself.plottedLineBinary[pv] is None:
-        #                plotpen=pg.mkPen(self.plotColor[pv],width=2)
-        #                self.plottedLineBinary[pv] = self.plotItemBinary.plot(self.x[x_len-y_len:],y,pen=plotpen)
-        #                self.plotItemBinary.showGrid(x=True,y=True)
-        #                self.plotItemBinary.setXLink(self.plotItemAnalog)
-        #                self.plotItemBinary.setYRange(-0.1, 1.1, padding=0)
-#
-        #            else:
-        #                self.plottedLineBinary[pv].setData(self.x[x_len-y_len:],y)
-        #                minimum_x_temp=-y_len/self.sampleRate
-        #                if minimum_x_temp < minimum_x:
-        #                    minimum_x = minimum_x_temp
-        #        else:
-        #            if self.plottedLineBinary[pv] is not None:
-        #                self.plotItemBinary.removeItem(self.plottedLineBinary[pv])
-        #                self.plottedLineBinary[pv] = None
-#
         #if autozoom:
         #    ymin = -0.1
         #    ymax = 1.1
@@ -827,7 +808,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         #    xmin -= range * 0.02
         #    self.plotItemBinary.setYRange(ymin, ymax, padding=0)
         #    self.plotItemBinary.setXRange(xmin, xmax, padding=0)
-#
+        #
         #self.allowSave = True
         #self.saveBtn.setEnabled(True)
 
@@ -856,3 +837,4 @@ if __name__ == "__main__":
     window=ecmcMtnMainGui(prefix=prefix,mtnPluginId=mtnid)
     window.show()
     sys.exit(app.exec_())
+
