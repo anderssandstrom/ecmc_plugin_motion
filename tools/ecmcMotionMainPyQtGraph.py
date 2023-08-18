@@ -174,7 +174,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.pause = 0
 
         self.createWidgets()
-        self.resize(1000,850)
+        self.resize(1800,850)
 
         self.connectToEcmc()
         self.bufferSize = int(self.sampleRate*xMaxTime)
