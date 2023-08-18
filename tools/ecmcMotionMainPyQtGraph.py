@@ -82,18 +82,20 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
     def __init__(self,prefix="IOC_TEST:",mtnPluginId=0):
         super(ecmcMtnMainGui, self).__init__()        
         self.pvItems           = {}
-        self.parseAxisStaWd    = ecmcParseAxisStatusWord()  
+        self.parseAxisStatWd    = ecmcParseAxisStatusWord()  
+        self.axisStatWdNames = self.parseAxisStatWd.getNames()
         self.plottedLineAnalog = {}
         self.plottedLineBinary = {}
-
+        self.dataStatWd = None
+        self.bufferSize = 0
         for pv in pvlist:
             self.pvItems[pv] = None
 
         for pv in pvAnalog:
             self.plottedLineAnalog[pv] = None
         
-        for pv in pvBinary:
-            self.plottedLineBinary[pv] = None
+        for pv in self.axisStatWdNames:
+            self.plottedLineBinary[pv] = None        
 
         #Set some default plot colours
         self.plotColor = {}
@@ -158,8 +160,9 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.resize(1000,850)
 
         self.connectToEcmc()
-        self.initPVs(self.sampleRate*xMaxTime)
-
+        self.bufferSize = int(self.sampleRate*xMaxTime)
+        self.initPVs(self.bufferSize)
+    
         # read sample rate to bea able to deduce buffer size
         self.setStatusOfWidgets()
         return
@@ -186,7 +189,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
         # calc x Array
         step=1/self.sampleRate           
-        self.x = np.arange(-xMaxTime-step,0+step,step)
+        self.x = np.arange(-xMaxTime,0,step)
 
         # Read available axes
         self.readAxisList()
@@ -303,7 +306,7 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
             layoutVertPlotsSelectionUpper.addWidget(self.checkBoxListAnalog[pv])
             self.checkBoxListAnalog[pv].toggled.connect(self.checkBoxStateChangedAnalog)
 
-        layoutVertPlotsSelectionUpper.addSpacing(200)
+        layoutVertPlotsSelectionUpper.addSpacing(0)
 
         framePlotsSelectionUpper.setLayout(layoutVertPlotsSelectionUpper)
         layoutVertPlotsSelection.addWidget(framePlotsSelectionUpper)
@@ -314,10 +317,11 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         binSelectLabel=QLabel('Binary:')
         layoutVertPlotsSelectionLower.addWidget(binSelectLabel)
         self.checkBoxListBinary={}
-        for pv in pvBinary:
+        
+        for pv in self.axisStatWdNames:
             self.checkBoxListBinary[pv] = QCheckBox(pv)
             self.checkBoxListBinary[pv].setChecked(True)
-            self.checkBoxListBinary[pv].setStyleSheet("color: " + self.checkboxColor[pv])
+            #self.checkBoxListBinary[pv].setStyleSheet("color: " + self.checkboxColor[pv])
             layoutVertPlotsSelectionLower.addWidget(self.checkBoxListBinary[pv])
             self.checkBoxListBinary[pv].toggled.connect(self.checkBoxStateChangedBinary)
 
@@ -461,11 +465,29 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
     def sig_cb_Stat_Arr(self,value):
 
-        bindata = self.parseAxisStaWd.convert(value)
+        data = self.parseAxisStatWd.convert(value)
         #bindata=self.pvItems['Stat-Arr'].binaryRepr(value)
-        print('Binary data: ' + str(bindata.shape))
-        print(bindata)
+        #print('Binary data: ' + str(bindata.shape))
+        #print(bindata)
+        self.addStatWdData(data)
+
+    def addStatWdData(self, values):
+
+        # Check if first assignment
+        if self.dataStatWd is None:            
+            self.dataStatWd = values
+            return
         
+        self.dataStatWd = np.append(self.dataStatWd,values,axis=1)
+        
+        # check if delete in beginning is needed
+        currcount = self.dataStatWd.shape[1]        
+        
+        # remove if needed
+        if currcount > self.bufferSize:
+            self.dataStatWd=self.dataStatWd[:,currcount-self.bufferSize:]
+        
+        self.dataStatWdlength = len(self.dataStatWd)
 
     # State chenge for Analog checkboxes
     def checkBoxStateChangedAnalog(self, int):
@@ -709,59 +731,105 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
 
     def plotBinary(self, autozoom=False):
 
-        if self.pvItems['Time-Arr'].getData() is None:
+
+        if self.dataStatWd is None:
             print('Error: No data')
             return
-      
+        if self.x is None:
+            print('X is None')
+            return
+    
         # plot data
         minimum_x = 0
-        for pv in pvBinary:
-            if self.pvItems[pv] is not None:
-                y = self.pvItems[pv].getData()
+        x_len=len(self.x)
+
+        i = 0
+
+        for pv in self.axisStatWdNames:
+            if self.checkBoxListBinary[pv].isChecked():
+                y = self.dataStatWd[i,:]
                 if y is None:
                     print('Y is None')
-                    continue
-                if self.x is None:
-                    print('X is None')
-                    continue
-
-                x_len=len(self.x)                
+                    return
+                
                 y_len=len(y)
+                print('y_len')
+                print(y_len)
+                print('x_len')
+                print(x_len)
 
-                if self.checkBoxListBinary[pv].isChecked():
-                    if self.plottedLineBinary[pv] is None:
-                        plotpen=pg.mkPen(self.plotColor[pv],width=2)
-                        self.plottedLineBinary[pv] = self.plotItemBinary.plot(self.x[x_len-y_len:],y,pen=plotpen)
-                        self.plotItemBinary.showGrid(x=True,y=True)
-                        self.plotItemBinary.setXLink(self.plotItemAnalog)
-                        self.plotItemBinary.setYRange(-0.1, 1.1, padding=0)
-
-                    else:
-                        self.plottedLineBinary[pv].setData(self.x[x_len-y_len:],y)
-                        minimum_x_temp=-y_len/self.sampleRate
-                        if minimum_x_temp < minimum_x:
-                            minimum_x = minimum_x_temp
+                if self.plottedLineBinary[pv] is None:
+                    #plotpen=pg.mkPen(self.plotColor[pv],width=2)
+                    self.plottedLineBinary[pv] = self.plotItemBinary.plot(self.x[x_len-y_len:],self.dataStatWd[i,:],pen=[0,22])
+                    self.plotItemBinary.showGrid(x=True,y=True)
+                    self.plotItemBinary.setXLink(self.plotItemAnalog)
+                    self.plotItemBinary.setYRange(-0.1, 1.1, padding=0)        
                 else:
-                    if self.plottedLineBinary[pv] is not None:
-                        self.plotItemBinary.removeItem(self.plottedLineBinary[pv])
-                        self.plottedLineBinary[pv] = None
+                    self.plottedLineBinary[pv].setData(self.x[x_len-y_len:],self.dataStatWd[i,:])
+                    minimum_x_temp=-y_len/self.sampleRate
+                    if minimum_x_temp < minimum_x:
+                        minimum_x = minimum_x_temp
+            else:
+                if self.plottedLineBinary[pv] is not None:
+                    self.plotItemBinary.removeItem(self.plottedLineBinary[pv])
+                    self.plottedLineBinary[pv] = None
+            i += 1
+        
+        return
 
-        if autozoom:
-            ymin = -0.1
-            ymax = 1.1
-            xmin = minimum_x
-            xmax = 0
-            if xmin == xmax:
-                xmin = xmin - 1
-                xmax = xmax + 1
-            range = xmax - xmin
-            xmax += range * 0.02
-            xmin -= range * 0.02
-            self.plotItemBinary.setYRange(ymin, ymax, padding=0)
-            self.plotItemBinary.setXRange(xmin, xmax, padding=0)
-
-        self.allowSave = True
-        self.saveBtn.setEnabled(True)
+        #if self.pvItems['Time-Arr'].getData() is None:
+        #    print('Error: No data')
+        #    return
+      #
+        ## plot data
+        #minimum_x = 0
+        #for pv in pvBinary:
+        #    if self.pvItems[pv] is not None:
+        #        y = self.pvItems[pv].getData()
+        #        if y is None:
+        #            print('Y is None')
+        #            continue
+        #        if self.x is None:
+        #            print('X is None')
+        #            continue
+#
+        #        x_len=len(self.x)                
+        #        y_len=len(y)
+#
+        #        if self.checkBoxListBinary[pv].isChecked():
+        #            if self.parseAxisStatWdNamesself.plottedLineBinary[pv] is None:
+        #                plotpen=pg.mkPen(self.plotColor[pv],width=2)
+        #                self.plottedLineBinary[pv] = self.plotItemBinary.plot(self.x[x_len-y_len:],y,pen=plotpen)
+        #                self.plotItemBinary.showGrid(x=True,y=True)
+        #                self.plotItemBinary.setXLink(self.plotItemAnalog)
+        #                self.plotItemBinary.setYRange(-0.1, 1.1, padding=0)
+#
+        #            else:
+        #                self.plottedLineBinary[pv].setData(self.x[x_len-y_len:],y)
+        #                minimum_x_temp=-y_len/self.sampleRate
+        #                if minimum_x_temp < minimum_x:
+        #                    minimum_x = minimum_x_temp
+        #        else:
+        #            if self.plottedLineBinary[pv] is not None:
+        #                self.plotItemBinary.removeItem(self.plottedLineBinary[pv])
+        #                self.plottedLineBinary[pv] = None
+#
+        #if autozoom:
+        #    ymin = -0.1
+        #    ymax = 1.1
+        #    xmin = minimum_x
+        #    xmax = 0
+        #    if xmin == xmax:
+        #        xmin = xmin - 1
+        #        xmax = xmax + 1
+        #    range = xmax - xmin
+        #    xmax += range * 0.02
+        #    xmin -= range * 0.02
+        #    self.plotItemBinary.setYRange(ymin, ymax, padding=0)
+        #    self.plotItemBinary.setXRange(xmin, xmax, padding=0)
+#
+        #self.allowSave = True
+        #self.saveBtn.setEnabled(True)
 
 def printOutHelp():
   print("ecmcMtnMainGui: Plots waveforms of Mtn data (updates on Y data callback). ")

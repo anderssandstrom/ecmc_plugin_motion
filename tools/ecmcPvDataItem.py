@@ -59,9 +59,6 @@ class ecmcPvDataItem():
         return self.data
 
     def addData(self, values):
-        #if pvSuffix == 'PosAct-Arr'
-        #   print(values)
-
         if not self.allowDataCollection:
             return
 
@@ -96,41 +93,3 @@ class ecmcPvDataItem():
     def pvPut(self,value):
         self.pv.put(value)
         self.data = value
-    
-    def binaryRepr(self,data):
-        localdata = data.astype(int)
-        return(
-        np.dstack((
-        np.bitwise_and(localdata, 0b10000000000000000000000000000000) >> 31,
-        np.bitwise_and(localdata, 0b1000000000000000000000000000000) >> 30,
-        np.bitwise_and(localdata, 0b100000000000000000000000000000) >> 29,
-        np.bitwise_and(localdata, 0b10000000000000000000000000000) >> 28,
-        np.bitwise_and(localdata, 0b1000000000000000000000000000) >> 27,
-        np.bitwise_and(localdata, 0b100000000000000000000000000) >> 26,
-        np.bitwise_and(localdata, 0b10000000000000000000000000) >> 25,
-        np.bitwise_and(localdata, 0b1000000000000000000000000) >> 24,
-        np.bitwise_and(localdata, 0b100000000000000000000000) >> 23,
-        np.bitwise_and(localdata, 0b10000000000000000000000) >> 22,
-        np.bitwise_and(localdata, 0b1000000000000000000000) >> 21,
-        np.bitwise_and(localdata, 0b100000000000000000000) >> 20,
-        np.bitwise_and(localdata, 0b10000000000000000000) >> 19,
-        np.bitwise_and(localdata, 0b1000000000000000000) >> 18,
-        np.bitwise_and(localdata, 0b100000000000000000) >> 17,
-        np.bitwise_and(localdata, 0b10000000000000000) >> 16,
-        np.bitwise_and(localdata, 0b1000000000000000) >> 15,
-        np.bitwise_and(localdata, 0b100000000000000) >> 14,
-        np.bitwise_and(localdata, 0b10000000000000) >> 13,
-        np.bitwise_and(localdata, 0b1000000000000) >> 12,
-        np.bitwise_and(localdata, 0b100000000000) >> 11,
-        np.bitwise_and(localdata, 0b10000000000) >> 10,
-        np.bitwise_and(localdata, 0b1000000000) >> 9,
-        np.bitwise_and(localdata, 0b100000000) >> 8,
-        np.bitwise_and(localdata, 0b10000000) >> 7,
-        np.bitwise_and(localdata, 0b1000000) >> 6,
-        np.bitwise_and(localdata, 0b100000) >> 5,
-        np.bitwise_and(localdata, 0b10000) >> 4,
-        np.bitwise_and(localdata, 0b1000) >> 3,
-        np.bitwise_and(localdata, 0b100) >> 2,
-        np.bitwise_and(localdata, 0b10) >> 1,
-        np.bitwise_and(localdata, 0b1)
-        )).flatten() > 0)
