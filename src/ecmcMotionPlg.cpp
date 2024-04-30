@@ -966,7 +966,7 @@ int ecmcMotionPlg::setAxis(int axisId) {
     //set old value again
     setParamAlarmStatus(asynAxisId_,1);
     setParamAlarmSeverity(asynAxisId_,1);
-    setIntegerParam(asynAxisId_, (epicsInt32)cfgAxisIndex_);
+    setIntegerParam(asynAxisId_, (epicsInt32)axisId);  // Set anyway to make alarms colors valid for correct index
     callParamCallbacks();
     return ECMC_PLUGIN_MOTION_ERROR_AXIS_OUT_OF_RANGE;    
   }
