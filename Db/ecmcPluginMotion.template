@@ -231,14 +231,30 @@ record(bo,"$(P)Plg-Mtn${INDEX}-TrgCmd-RB"){
   field(HIGH, 0.001)
 }
 
-record(longout,"$(P)Plg-Mtn${INDEX}-Mde-RB"){
+#record(longout,"$(P)Plg-Mtn${INDEX}-Mde-RB"){
+#  info(asyn:READBACK,"1")
+#  field(DESC, "Mode selection")
+#  field(PINI, "1")
+#  field(TSE,  "0")
+#  field(DTYP, "asynInt32")
+#  field(OUT,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.mode")
+#  field(SCAN, "Passive")
+#}
+
+record(mbbo, "$(P)Plg-Mtn${INDEX}-Mde-RB"){
   info(asyn:READBACK,"1")
   field(DESC, "Mode selection")
   field(PINI, "1")
   field(TSE,  "0")
   field(DTYP, "asynInt32")
   field(OUT,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.mode")
-  field(SCAN, "Passive")
+  field(ZRST, "NO_COMMAND")
+  field(ZRVL, 0)
+  field(ONST, "CONT")
+  field(ONVL, 1)
+  field(TWST, "TRIGG")
+  field(TWVL, 2)
+  field(VAL,  1)
 }
 
 record(longout,"$(P)Plg-Mtn${INDEX}-Cmd-RB"){
