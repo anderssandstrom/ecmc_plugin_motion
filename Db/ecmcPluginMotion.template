@@ -161,7 +161,7 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-ErrId-Arr"){
   field(TSE,  "0")  
 }
 
-# Axis Error Id
+# Axis status word 
 record(waveform,"$(P)Plg-Mtn${INDEX}-Stat-Arr"){
   info(asyn:FIFO, "1000")
   field(DESC, "Status wd")
@@ -191,10 +191,13 @@ record(ao,"$(P)Plg-Mtn${INDEX}-AxCmd-RB"){
   field(DTYP,"asynInt32")
   field(OUT, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.axis_id")
   field(DOL, "0")
+  field(PREC,"0")
+  field(DRVL,"0")
+  field(DRVH,"100")
   field(VAL, "1")
 }
 
-record(ai,"$(P)Plg-Mtn${INDEX}-SmpHz-RB"){
+record(ai,"$(P)Plg-Mtn${INDEX}-SmpHz"){
   info(asyn:READBACK,"1")
   field(DESC, "Sample rate")
   field(DTYP,"asynFloat64")
@@ -204,68 +207,63 @@ record(ai,"$(P)Plg-Mtn${INDEX}-SmpHz-RB"){
   field(SCAN, "I/O Intr")
 }
 
-record(ai,"$(P)Plg-Mtn${INDEX}-BuffSze"){
-  info(asyn:READBACK,"1")
-  field(DESC, "Buffer Size")
-  field(DTYP,"asynInt32")
-  field(INP, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.buff_size")  
-  field(VAL, "1")
-}
+# Future use
+#record(ai,"$(P)Plg-Mtn${INDEX}-BuffSze"){
+#  info(asyn:READBACK,"1")
+#  field(DESC, "Buffer Size")
+#  field(DTYP,"asynInt32")
+#  field(INP, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.buff_size")  
+#  field(VAL, "1")
+#}
 
-record(ai,"$(P)Plg-Mtn${INDEX}-ElmCnt"){
-  info(asyn:READBACK,"1")
-  field(DESC, "Elements in buffer count")
-  field(DTYP,"asynInt32")
-  field(INP, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.elem_count")
-  field(VAL, "1")
-}
+# Future use
+#record(ai,"$(P)Plg-Mtn${INDEX}-ElmCnt"){
+#  info(asyn:READBACK,"1")
+#  field(DESC, "Elements in buffer count")
+#  field(DTYP,"asynInt32")
+#  field(INP, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.elem_count")
+#  field(VAL, "1")
+#}
 
-record(bo,"$(P)Plg-Mtn${INDEX}-TrgCmd-RB"){
-  info(asyn:READBACK,"1")
-  field(DESC, "Trigg command")
-  field(DTYP,"asynInt32")
-  field(OUT, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.trigg")
-  field(ZNAM,"IDLE")
-  field(ONAM,"TRIGG")  
-  field(VAL, "0")
-  field(HIGH, 0.001)
-}
+# Future use
+#record(bo,"$(P)Plg-Mtn${INDEX}-TrgCmd-RB"){
+#  info(asyn:READBACK,"1")
+#  field(DESC, "Trigg command")
+#  field(DTYP,"asynInt32")
+#  field(OUT, "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.trigg")
+#  field(ZNAM,"IDLE")
+#  field(ONAM,"TRIGG")  
+#  field(VAL, "0")
+#  field(HIGH, 0.001)
+#}
 
-#record(longout,"$(P)Plg-Mtn${INDEX}-Mde-RB"){
+# Future use
+#record(mbbo, "$(P)Plg-Mtn${INDEX}-Mde-RB"){
 #  info(asyn:READBACK,"1")
 #  field(DESC, "Mode selection")
 #  field(PINI, "1")
 #  field(TSE,  "0")
 #  field(DTYP, "asynInt32")
 #  field(OUT,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.mode")
-#  field(SCAN, "Passive")
+#  field(ZRST, "NO_COMMAND")
+#  field(ZRVL, 0)
+#  field(ONST, "CONT")
+#  field(ONVL, 1)
+#  field(TWST, "TRIGG")
+#  field(TWVL, 2)
+#  field(VAL,  1)
 #}
 
-record(mbbo, "$(P)Plg-Mtn${INDEX}-Mde-RB"){
-  info(asyn:READBACK,"1")
-  field(DESC, "Mode selection")
-  field(PINI, "1")
-  field(TSE,  "0")
-  field(DTYP, "asynInt32")
-  field(OUT,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.mode")
-  field(ZRST, "NO_COMMAND")
-  field(ZRVL, 0)
-  field(ONST, "CONT")
-  field(ONVL, 1)
-  field(TWST, "TRIGG")
-  field(TWVL, 2)
-  field(VAL,  1)
-}
-
-record(longout,"$(P)Plg-Mtn${INDEX}-Cmd-RB"){
-  info(asyn:READBACK,"1")
-  field(DESC, "Command")
-  field(PINI, "1")
-  field(TSE,  "0")
-  field(DTYP, "asynInt32")
-  field(OUT,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.cmd")
-  field(SCAN, "Passive")
-}
+# Future use
+# record(longout,"$(P)Plg-Mtn${INDEX}-Cmd-RB"){
+#   info(asyn:READBACK,"1")
+#   field(DESC, "Command")
+#   field(PINI, "1")
+#   field(TSE,  "0")
+#   field(DTYP, "asynInt32")
+#   field(OUT,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.cmd")
+#   field(SCAN, "Passive")
+# }
 
 record(longin,"$(P)Plg-Mtn${INDEX}-Stat"){
   info(asyn:READBACK,"1")

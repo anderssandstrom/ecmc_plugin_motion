@@ -833,9 +833,9 @@ void ecmcMotionPlg::executeMotionObject() {
     return;
   }
   
-  if(cfgMode_==TRIGG && !bTriggInProgress_) {
-    return;
-  }
+  //if(cfgMode_==TRIGG && !bTriggInProgress_) {
+  //  return;
+  //}
 
   // protect axis_ if axis object id is changed over asyn
   epicsMutexLock(axisMutex_);

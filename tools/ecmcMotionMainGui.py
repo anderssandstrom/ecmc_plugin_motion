@@ -334,39 +334,63 @@ class ecmcMtnMainGui(QtWidgets.QDialog):
         self.pv_signal_cbs['ElmCnt'].data_signal.emit(value)
 
     def on_change_PosAct_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
+        if self.pause:
+            return
         self.pv_signal_cbs['PosAct-Arr'].data_signal.emit(value)
 
-    def on_change_PosSet_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):        
+    def on_change_PosSet_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
+        if self.pause:
+           return
         self.pv_signal_cbs['PosSet-Arr'].data_signal.emit(value)
 
     def on_change_PosErr_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
+        if self.pause:
+            return
         self.pv_signal_cbs['PosErr-Arr'].data_signal.emit(value)
 
     def on_change_Time_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
+        if self.pause:
+            return
         self.pv_signal_cbs['Time-Arr'].data_signal.emit(value)
 
     def on_change_Ena_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
+        if self.pause:
+            return
         self.pv_signal_cbs['Ena-Arr'].data_signal.emit(value)
 
     def on_change_EnaAct_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
+        if self.pause:
+            return
         self.pv_signal_cbs['EnaAct-Arr'].data_signal.emit(value)
 
     def on_change_Bsy_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
+        if self.pause:
+            return
         self.pv_signal_cbs['Bsy-Arr'].data_signal.emit(value)
 
     def on_change_Exe_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
+        if self.pause:
+            return
         self.pv_signal_cbs['Exe-Arr'].data_signal.emit(value)
 
     def on_change_TrjSrc_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
+        if self.pause:
+            return
         self.pv_signal_cbs['TrjSrc-Arr'].data_signal.emit(value)
 
     def on_change_EncSrc_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
+        if self.pause:
+            return
         self.pv_signal_cbs['EncSrc-Arr'].data_signal.emit(value)
 
     def on_change_AtTrg_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
+        if self.pause:
+            return
         self.pv_signal_cbs['AtTrg-Arr'].data_signal.emit(value)
 
     def on_change_ErrId_Arr(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
+        if self.pause:
+            return
         self.pv_signal_cbs['ErrId-Arr'].data_signal.emit(value)
 
     def on_change_Mde_RB(self,pvname=None, value=None, char_value=None,timestamp=None, **kw):
