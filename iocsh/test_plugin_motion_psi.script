@@ -2,15 +2,9 @@
 ## Example: Configuraftion for running ecmc motion plugin
 ##############################################################################
 
-## Initiation:
-epicsEnvSet("IOC" ,"$(IOC="IOC_TEST")")
-epicsEnvSet("ECMCCFG_INIT" ,"")  #Only run startup once (auto at PSI, need call at ESS), variable set to "#" in startup.cmd
-epicsEnvSet("SCRIPTEXEC" ,"$(SCRIPTEXEC="iocshLoad")")
-
-require ecmccfg "sandst_a_v9.0.1_RC1" "ECMC_VER=v9.0.1_RC1"
-
+require ecmccfg "9.4.0" "ECMC_VER=9.4.0"
 ##############################################################################
-## Configure hardware
+## Configue
 
 epicsEnvSet("ECMC_EC_SLAVE_NUM",              "4")
 ${SCRIPTEXEC} ${ecmccfg_DIR}configureSlave.cmd, "SLAVE_ID=$(ECMC_EC_SLAVE_NUM), HW_DESC=EL7031, CONFIG=-Motor-Trinamic-QMot-QSH4218-41-10-035"
@@ -33,8 +27,6 @@ $(SCRIPTEXEC) ($(ecmccfg_DIR)configureAxis.cmd, CONFIG=./cfg/el7031.ax)
 #
 epicsEnvSet(ECMC_PLUGIN_CONFIG,"PLUGIN_ID=1,AX=1,BUFF_SIZE=200,DBG=0,ENA=1")
 require ecmc_plugin_motion sandst_a "${ECMC_PLUGIN_CONFIG}"
-# below needed at ESS but not PSI:
-#${SCRIPTEXEC} ${ecmc_plugin_motion_DIR}startup.cmd "${ECMC_PLUGIN_CONFIG}"
 
 ##############################################################################
 ############# Configure diagnostics:

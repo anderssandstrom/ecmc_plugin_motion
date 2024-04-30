@@ -27,7 +27,7 @@ extern "C" {
 #include "ecmcMotionPlgWrap.h"
 
 static int    lastEcmcError   = 0;
-static char*  lastConfStr         = NULL;
+static char*  lastConfStr     = NULL;
 
 /** Optional. 
  *  Will be called once after successfull load into ecmc.
@@ -38,7 +38,7 @@ int motionConstruct(char *configStr)
 {
   //This module is allowed to load several times so no need to check if loaded
 
-  // create FFT object and register data callback
+  // create object and register data callback
   lastConfStr = strdup(configStr);
   return createMotionObj(configStr);
 }
@@ -48,10 +48,10 @@ int motionConstruct(char *configStr)
  **/
 void motionDestruct(void)
 {
-  deleteAllMotionObjs();
-  if(lastConfStr){
-    free(lastConfStr);
-  }
+  //deleteAllMotionObjs();
+  //if(lastConfStr){
+  //  free(lastConfStr);
+  //}
 }
 
 /** Optional function.

@@ -10,6 +10,7 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-PosAct-Arr"){
   field(SCAN, "I/O Intr")
   field(TSE,  "0")
   field(EGU,  "${RAW_EGU= }")
+  field(PREC, "${PREC=3 }")
 }
 
 # Set pos
@@ -24,6 +25,7 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-PosSet-Arr"){
   field(SCAN, "I/O Intr")
   field(TSE,  "0")
   field(EGU,  "${RAW_EGU= }")
+  field(PREC, "${PREC=3 }")
 }
 
 # Position Error
@@ -38,6 +40,7 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-PosErr-Arr"){
   field(SCAN, "I/O Intr")
   field(TSE,  "0")
   field(EGU,  "${RAW_EGU= }")
+  field(PREC, "${PREC=3 }")
 }
 
 # X axis time (reltive within buffer)
@@ -51,6 +54,7 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-Time-Arr"){
   field(NELM, "$(NELM)")
   field(SCAN, "I/O Intr")
   field(TSE,  "0")
+  field(PREC, "${PREC=3 }")
 }
 
 # Axis Enable

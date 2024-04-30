@@ -6,7 +6,7 @@ BUILDCLASSES = Linux
 ARCH_FILTER = deb10%
 
 # Run 7.0.6 for now
-EXCLUDE_VERSIONS+=3 7.0.5 7.0.7
+EXCLUDE_VERSIONS+=3 7.0.5 7.0.6
 
 IGNORE_MODULES += asynMotor
 IGNORE_MODULES += motorBase
@@ -16,8 +16,8 @@ OPT_CXXFLAGS_YES = -O3
 
 # dependencies
 ECmasterECMC_VERSION = v1.1.0
-motorECMC_VERSION = 7.0.7-ESS
-ecmc_VERSION = v9.0.1_RC1
+motorECMC_VERSION = 7.0.9-ESS
+ecmc_VERSION = sandst_a
 
 ################################################################################
 # THIS RELATES TO THE EtherCAT MASTER LIBRARY
@@ -29,9 +29,10 @@ EC_MASTER_LIB = ${EPICS_MODULES}/ECmasterECMC/${ECmasterECMC_VERSION}/R${EPICSVE
 USR_LDFLAGS += -Wl,-rpath=${EC_MASTER_LIB}
 USR_LDFLAGS +=         -L ${EC_MASTER_LIB}
 
-BASE_DIR = ecmc_plugin_motion
+BASE_DIR = .
 SRC_DIR = $(BASE_DIR)/src
 DB_DIR =  $(BASE_DIR)/Db
+SCRIPTS_DIR = $(BASE_DIR)/scripts
 
 SOURCES += $(SRC_DIR)/ecmcPluginMotion.c
 SOURCES += $(SRC_DIR)/ecmcMotionPlgWrap.cpp
@@ -41,6 +42,5 @@ SOURCES += $(SRC_DIR)/ecmcMotionPlg.cpp
 HEADERS += $(foreach d,${SRC_DIR}, $(wildcard $d/*.h))
 DBDS += $(foreach d,${SRC_DIR}, $(wildcard $d/*.dbd))
 SCRIPTS += $(BASE_DIR)/startup.cmd
-SCRIPTS += $(BASE_DIR)/addMotionObj.cmd
+SCRIPTS += $(SCRIPTS_DIR)/addMotionObj.cmd
 TEMPLATES += $(wildcard $(DB_DIR)/*.template)
-
