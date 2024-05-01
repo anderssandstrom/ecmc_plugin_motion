@@ -2,7 +2,7 @@
 record(waveform,"$(P)Plg-Mtn${INDEX}-PosAct-Arr"){
   info(asyn:FIFO, "1000")
   field(DESC, "Pos Act")
-  field(PINI, "1")
+  #field(PINI, "1")
   field(DTYP, "asynFloat64ArrayIn")
   field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.actpos_arr")
   field(FTVL, "DOUBLE")
@@ -17,7 +17,7 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-PosAct-Arr"){
 record(waveform,"$(P)Plg-Mtn${INDEX}-PosSet-Arr"){
   info(asyn:FIFO, "1000")
   field(DESC, "Pos Set")
-  field(PINI, "1")
+  #field(PINI, "1")
   field(DTYP, "asynFloat64ArrayIn")
   field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.setpos_arr")
   field(FTVL, "DOUBLE")
@@ -32,7 +32,7 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-PosSet-Arr"){
 record(waveform,"$(P)Plg-Mtn${INDEX}-PosErr-Arr"){
   info(asyn:FIFO, "1000")
   field(DESC, "Pos Error (diff)")
-  field(PINI, "1")
+  #field(PINI, "1")
   field(DTYP, "asynFloat64ArrayIn")
   field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.diffpos_arr")
   field(FTVL, "DOUBLE")
@@ -47,7 +47,7 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-PosErr-Arr"){
 record(waveform,"$(P)Plg-Mtn${INDEX}-Time-Arr"){
   info(asyn:FIFO, "1000")
   field(DESC, "Rel. time within buffer")
-  field(PINI, "1")
+  #field(PINI, "1")
   field(DTYP, "asynFloat64ArrayIn")
   field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.x_arr")
   field(FTVL, "DOUBLE")
@@ -61,7 +61,7 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-Time-Arr"){
 record(waveform,"$(P)Plg-Mtn${INDEX}-Ena-Arr"){
   info(asyn:FIFO, "1000")
   field(DESC, "Enable")
-  field(PINI, "1")
+  #field(PINI, "1")
   field(DTYP, "asynInt8ArrayIn")
   field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.enable_arr")
   field(FTVL, "CHAR")
@@ -74,7 +74,7 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-Ena-Arr"){
 record(waveform,"$(P)Plg-Mtn${INDEX}-EnaAct-Arr"){
   info(asyn:FIFO, "1000")
   field(DESC, "Enabled")
-  field(PINI, "1")
+  #field(PINI, "1")
   field(DTYP, "asynInt8ArrayIn")
   field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.enabled_arr")
   field(FTVL, "CHAR")
@@ -87,7 +87,7 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-EnaAct-Arr"){
 record(waveform,"$(P)Plg-Mtn${INDEX}-Bsy-Arr"){
   info(asyn:FIFO, "1000")
   field(DESC, "Busy")
-  field(PINI, "1")
+  #field(PINI, "1")
   field(DTYP, "asynInt8ArrayIn")
   field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.busy_arr")
   field(FTVL, "CHAR")
@@ -100,7 +100,7 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-Bsy-Arr"){
 record(waveform,"$(P)Plg-Mtn${INDEX}-Exe-Arr"){
   info(asyn:FIFO, "1000")
   field(DESC, "Execute")
-  field(PINI, "1")
+  #field(PINI, "1")
   field(DTYP, "asynInt8ArrayIn")
   field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.execute_arr")
   field(FTVL, "CHAR")
@@ -113,7 +113,7 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-Exe-Arr"){
 record(waveform,"$(P)Plg-Mtn${INDEX}-TrjSrc-Arr"){
   info(asyn:FIFO, "1000")
   field(DESC, "Traj source")
-  field(PINI, "1")
+  #field(PINI, "1")
   field(DTYP, "asynInt8ArrayIn")
   field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.trajsrc_arr")
   field(FTVL, "CHAR")
@@ -126,7 +126,7 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-TrjSrc-Arr"){
 record(waveform,"$(P)Plg-Mtn${INDEX}-EncSrc-Arr"){
   info(asyn:FIFO, "1000")
   field(DESC, "Enc source")
-  field(PINI, "1")
+  #field(PINI, "1")
   field(DTYP, "asynInt8ArrayIn")
   field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.encsrc_arr")
   field(FTVL, "CHAR")
@@ -139,7 +139,7 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-EncSrc-Arr"){
 record(waveform,"$(P)Plg-Mtn${INDEX}-AtTrg-Arr"){
   info(asyn:FIFO, "1000")
   field(DESC, "At target")
-  field(PINI, "1")
+  #field(PINI, "1")
   field(DTYP, "asynInt8ArrayIn")
   field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.attarget_arr")
   field(FTVL, "CHAR")
@@ -152,7 +152,7 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-AtTrg-Arr"){
 record(waveform,"$(P)Plg-Mtn${INDEX}-ErrId-Arr"){
   info(asyn:FIFO, "1000")
   field(DESC, "Error Id")
-  field(PINI, "1")
+  #field(PINI, "1")
   field(DTYP, "asynInt32ArrayIn")
   field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.error_arr")
   field(FTVL, "LONG")
@@ -165,7 +165,7 @@ record(waveform,"$(P)Plg-Mtn${INDEX}-ErrId-Arr"){
 record(waveform,"$(P)Plg-Mtn${INDEX}-Stat-Arr"){
   info(asyn:FIFO, "1000")
   field(DESC, "Status wd")
-  field(PINI, "1")
+  #field(PINI, "1")
   field(DTYP, "asynInt32ArrayIn")
   field(INP,  "@asyn(PLUGIN.MOTION_${INDEX},$(ADDR=0),$(TIMEOUT=1000))plugin.motion_${INDEX}.statuswd_arr")
   field(FTVL, "LONG")

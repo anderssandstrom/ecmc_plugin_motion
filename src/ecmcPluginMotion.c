@@ -112,7 +112,7 @@ struct ecmcPluginData pluginDataDef = {
   // Allways use ECMC_PLUG_VERSION_MAGIC
   .ifVersion = ECMC_PLUG_VERSION_MAGIC, 
   // Name 
-  .name = "ecmcPlugin_Motion",
+  .name = "ecmc_plugin_motion",
   // Description
   .desc = "Motion plugin for commissioning of ecmc motion axes.",
   // Option description
@@ -120,7 +120,7 @@ struct ecmcPluginData pluginDataDef = {
                 "    "ECMC_PLUGIN_AXIS_OPTION_CMD"<axis id>      : Sets default source axis id.\n"
                 "    "ECMC_PLUGIN_BUFFER_SIZE_OPTION_CMD"<size>  : Data points to collect, default = 4096.\n" 
                 "    "ECMC_PLUGIN_RATE_OPTION_CMD"<rate hz>      : Sampling rate in Hz" 
-                "    "ECMC_PLUGIN_MODE_OPTION_CMD"<TRIGG/CONT>   : Sampling rate in Hz" 
+    //            "    "ECMC_PLUGIN_MODE_OPTION_CMD"<TRIGG/CONT>   : Cont or triggered mode" 
                 , 
   // Plugin version
   .version = ECMC_EXAMPLE_PLUGIN_VERSION,
